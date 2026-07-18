@@ -1,8 +1,12 @@
 # Rental Platform
 
 Plataforma web para gestão de aluguel de ferramentas, construída como um monólito modular
-em Django. A primeira versão inclui organizações, usuários, categorias, modelos de
-ferramentas e unidades físicas individualizadas.
+em Django. A base inclui organizações, estabelecimentos (matriz e filiais), usuários,
+categorias, modelos de ferramentas e unidades físicas individualizadas.
+
+Os estabelecimentos aceitam CNPJs numéricos e alfanuméricos. O sistema armazena o CNPJ
+normalizado, sem máscara, e valida os dois dígitos verificadores conforme a regra oficial.
+Cada unidade física pode ser vinculada ao estabelecimento responsável pelo seu estoque.
 
 ## Requisitos
 
