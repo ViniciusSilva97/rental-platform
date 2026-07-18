@@ -19,7 +19,6 @@ class ToolModelAdmin(admin.ModelAdmin):
 
 @admin.register(ToolUnit)
 class ToolUnitAdmin(admin.ModelAdmin):
-    list_display = ("asset_code", "tool_model", "status", "location")
-    list_filter = ("status", "organization")
+    list_display = ("asset_code", "tool_model", "establishment", "status", "location")
+    list_filter = ("status", "organization", "establishment")
     search_fields = ("asset_code", "serial_number", "tool_model__name")
-

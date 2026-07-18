@@ -1,3 +1,7 @@
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from common.models import TimeStampedModel
@@ -32,9 +36,18 @@ class ToolModel(TimeStampedModel):
     brand = models.CharField("marca", max_length=100, blank=True)
     model_number = models.CharField("modelo", max_length=100, blank=True)
     description = models.TextField("descrição", blank=True)
-    daily_rate = models.DecimalField("valor da diária", max_digits=10, decimal_places=2)
+    daily_rate = models.DecimalField(
+        "valor da diária",
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
     deposit_amount = models.DecimalField(
-        "valor da caução", max_digits=10, decimal_places=2, default=0
+        "valor da caução",
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     active = models.BooleanField("ativo", default=True)
 
@@ -44,13 +57,33 @@ class ToolModel(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["organization", "name", "brand", "model_number"],
                 name="unique_tool_model_per_organization",
-            )
+            ),
+            models.CheckConstraint(
+                condition=models.Q(daily_rate__gte=0),
+                name="non_negative_daily_rate",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(deposit_amount__gte=0),
+                name="non_negative_deposit_amount",
+            ),
         ]
         verbose_name = "modelo de ferramenta"
         verbose_name_plural = "modelos de ferramentas"
 
     def __str__(self) -> str:
         return " ".join(part for part in (self.brand, self.name, self.model_number) if part)
+
+    def clean(self):
+        super().clean()
+        if self.category_id and self.organization_id:
+            if self.category.organization_id != self.organization_id:
+                raise ValidationError(
+                    {"category": "A categoria deve pertencer à mesma organização do modelo."}
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean(validate_unique=False, validate_constraints=False)
+        return super().save(*args, **kwargs)
 
 
 class ToolUnit(TimeStampedModel):
@@ -67,6 +100,14 @@ class ToolUnit(TimeStampedModel):
         "organizations.Organization", on_delete=models.CASCADE, related_name="tool_units"
     )
     tool_model = models.ForeignKey(ToolModel, on_delete=models.PROTECT, related_name="units")
+    establishment = models.ForeignKey(
+        "organizations.Establishment",
+        on_delete=models.PROTECT,
+        related_name="tool_units",
+        null=True,
+        blank=True,
+        help_text="Estabelecimento responsável pela unidade física.",
+    )
     asset_code = models.CharField("código patrimonial", max_length=50)
     serial_number = models.CharField("número de série", max_length=100, blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.AVAILABLE)
@@ -87,3 +128,25 @@ class ToolUnit(TimeStampedModel):
     def __str__(self) -> str:
         return f"{self.asset_code} — {self.tool_model}"
 
+    def clean(self):
+        super().clean()
+        errors = {}
+
+        if self.tool_model_id and self.organization_id:
+            if self.tool_model.organization_id != self.organization_id:
+                errors["tool_model"] = (
+                    "O modelo de ferramenta deve pertencer à mesma organização da unidade."
+                )
+
+        if self.establishment_id and self.organization_id:
+            if self.establishment.organization_id != self.organization_id:
+                errors["establishment"] = (
+                    "O estabelecimento deve pertencer à mesma organização da unidade."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean(validate_unique=False, validate_constraints=False)
+        return super().save(*args, **kwargs)
