@@ -4,7 +4,7 @@ Base técnica de uma plataforma para gestão de aluguel de ferramentas. O projet
 Python e Django em um monólito modular, com PostgreSQL nos ambientes compartilhados e
 SQLite como alternativa de baixo atrito para desenvolvimento local.
 
-A versão `0.2.0` cobre:
+A versão `0.2.1` cobre:
 
 - usuários, organizações e vínculos de acesso;
 - matriz e filiais com CNPJ numérico ou alfanumérico;
@@ -12,6 +12,8 @@ A versão `0.2.0` cobre:
 - vínculo obrigatório de cada unidade ao estabelecimento responsável;
 - clientes pessoa física ou jurídica, com CPF ou CNPJ;
 - múltiplos endereços brasileiros por cliente;
+- políticas versionadas de preço por hora, dia e mês;
+- mês fixo ou calendário e cobrança de frações arredondada ou proporcional;
 - painel administrativo, verificações de saúde e configuração por ambiente;
 - testes automatizados e integração contínua com PostgreSQL.
 
@@ -104,10 +106,11 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 - [Decisões arquiteturais](docs/decisions.md)
 - [Auditoria da v0.1.0](docs/versions/v0.1.0.md)
 - [Auditoria da v0.2.0](docs/versions/v0.2.0.md)
+- [Auditoria da v0.2.1](docs/versions/v0.2.1.md)
 - [Contexto compacto para IA](docs/ai-context.md)
 
 ## Próximo incremento
 
-A versão `0.2.1` introduzirá políticas de preço por hora, dia e mês. A definição de
-mês e as regras de arredondamento serão configuráveis e versionadas. Reservas e
-disponibilidade permanecem fora desse incremento.
+A versão `0.2.2` introduzirá a base patrimonial dos ativos: aquisição, valor residual,
+vida útil e preparação para depreciação futura. Reservas e disponibilidade permanecem
+fora desse incremento.

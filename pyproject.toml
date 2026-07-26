@@ -1,6 +1,6 @@
 [project]
 name = "rental-platform"
-version = "0.2.0"
+version = "0.2.1"
 description = "Plataforma web de gestão de aluguel de ferramentas."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"

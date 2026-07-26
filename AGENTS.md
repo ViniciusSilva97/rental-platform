@@ -6,7 +6,7 @@ Leia, nesta ordem, antes de alterar o projeto:
 2. `docs/ai-context.md`;
 3. `docs/architecture.md`;
 4. `docs/code-reference.md`;
-5. `docs/versions/v0.2.0.md`.
+5. `docs/versions/v0.2.1.md`.
 
 ## Regras do projeto
 
@@ -14,6 +14,8 @@ Leia, nesta ordem, antes de alterar o projeto:
 - Toda entidade pertencente ao negócio deve carregar `organization`.
 - Clientes podem ser pessoas físicas ou jurídicas; documentos são armazenados sem máscara.
 - Endereços de clientes e seus clientes devem pertencer à mesma organização.
+- Políticas de preço pertencem à mesma organização do modelo de ferramenta.
+- A versão vigente é a política ativa mais recente cuja data já começou.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.
 - Relacionamentos entre registros de organizações diferentes são inválidos.
 - Valores monetários usam `DecimalField`; nunca use `float`.

@@ -14,10 +14,12 @@ flowchart TD
     APP --> ORG["organizations"]
     APP --> CAT["catalog"]
     APP --> CUS["customers"]
+    APP --> PRI["pricing"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
     CUS --> DB
+    PRI --> DB
 ```
 
 ## Módulos
@@ -28,6 +30,7 @@ flowchart TD
 | `organizations` | tenant, estabelecimentos e acesso interno | catálogo e preços |
 | `catalog` | classificação, modelo comercial e ativo físico | contratos e pagamentos |
 | `customers` | pessoas físicas/jurídicas, contatos e endereços | reservas e contratos |
+| `pricing` | versões e cálculo elementar de preços | disponibilidade, descontos e contratos |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
@@ -35,6 +38,8 @@ flowchart TD
 pertencem a uma organização; unidades também pertencem a um estabelecimento. A
 dependência inversa não existe. `customers` também depende de `organizations`, mas não
 depende de `catalog`; reservas futuras serão responsáveis por relacionar os domínios.
+`pricing` depende de `catalog` e `organizations`, pois cada política precifica um modelo
+de ferramenta dentro do mesmo tenant.
 
 ## Isolamento por organização
 
@@ -52,6 +57,9 @@ Invariantes já implementadas:
 - o mesmo CPF ou CNPJ não se repete dentro da organização;
 - endereços não podem relacionar clientes de outra organização;
 - existe no máximo um endereço principal ativo por cliente.
+- políticas não podem relacionar modelos de outra organização;
+- cada modelo possui no máximo uma versão de preço por data de vigência;
+- toda política oferece ao menos um valor não negativo por hora, dia ou mês.
 
 O Django Admin atual é uma ferramenta interna de bootstrap e não representa ainda
 isolamento completo de tenant na interface. Antes de uso por clientes reais, os
@@ -88,8 +96,10 @@ devem validar seus próprios dados e continuam protegidos apenas pelas constrain
 | `0.6.x` | checkout hospedado e webhooks |
 | `0.7.x` | aplicativo móvel e IA assistiva |
 
-Preço será uma política versionada, não apenas três colunas soltas. O mês deverá
-suportar definições configuráveis, como mês-calendário ou quantidade fixa de dias.
+Preço é uma política versionada, não apenas três colunas soltas. A versão ativa mais
+recente já vigente substitui implicitamente a anterior. Mês-calendário e quantidade
+fixa de dias são configurações explícitas; a conversão de um período real em unidades
+será responsabilidade do fluxo de orçamento.
 Depreciação dependerá de dados patrimoniais e eventos de manutenção; ela não deve ser
 calculada antes de esses fatos existirem.
 

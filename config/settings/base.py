@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     "apps.organizations",
     "apps.catalog",
     "apps.customers",
+    "apps.pricing",
 ]
 
 MIDDLEWARE = [

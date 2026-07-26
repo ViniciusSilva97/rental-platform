@@ -176,15 +176,14 @@ Define o produto comercial compartilhado por várias unidades físicas.
 | `category` | categoria protegida contra exclusão enquanto utilizada |
 | `name`, `brand`, `model_number` | identidade comercial |
 | `description` | texto livre opcional |
-| `daily_rate` | diária não negativa da fase inicial |
 | `deposit_amount` | caução não negativa |
 | `clean()` | rejeita categoria de outra organização |
 | `save()` | chama `full_clean()` antes de persistir |
 | `__str__()` | combina marca, nome e modelo, omitindo partes vazias |
 
 A unicidade composta evita duplicar a mesma combinação de nome, marca e modelo na
-organização. `daily_rate` é provisório; a versão de preços migrará esse valor para uma
-política versionada sem perder dados.
+organização. Preços pertencem ao módulo `pricing`; o catálogo não decide mais uma
+diária diretamente.
 
 ### `ToolUnit`
 
@@ -209,13 +208,56 @@ Estados existentes: `AVAILABLE`, `RESERVED`, `RENTED`, `INSPECTION`, `MAINTENANC
 Quando locações forem implementadas, mudanças de estado deverão passar por um serviço
 transacional com regras explícitas e histórico.
 
+## `pricing`
+
+### `BillingUnit`
+
+Enumeração de unidades aceitas pelo cálculo elementar: `HOUR`, `DAY` e `MONTH`.
+
+### `PricingPolicy`
+
+Representa uma versão de preço para um modelo de ferramenta.
+
+| Elemento | Comportamento |
+|---|---|
+| `organization` | tenant explícito da política |
+| `tool_model` | modelo comercial precificado |
+| `effective_from` | primeiro dia da vigência; versão posterior substitui a anterior |
+| `hourly_rate`, `daily_rate`, `monthly_rate` | valores opcionais e não negativos |
+| `partial_unit_rounding` | arredonda fração para cima ou cobra proporcionalmente |
+| `month_definition` | mês com dias fixos ou mês-calendário |
+| `fixed_month_days` | quantidade entre 1 e 366; vazia para mês-calendário |
+| `active` | permite retirar uma versão da seleção sem apagá-la |
+| `clean()` | valida tenant, ao menos um valor e definição de mês |
+| `save()` | executa `full_clean()` antes da escrita |
+
+Existe uma única versão por combinação de modelo e data. Não há `valid_until`: para uma
+data de referência, a política ativa com maior `effective_from` é a vigente. Isso evita
+intervalos sobrepostos e permite agendar uma mudança futura com um novo registro.
+
+### Serviços de preço
+
+| Função/classe | Contrato |
+|---|---|
+| `select_effective_policy(...)` | seleciona a versão ativa mais recente já vigente |
+| `calculate_charge(...)` | multiplica a tarifa pela quantidade e retorna duas casas decimais |
+| `PricingUnavailable` | informa que a unidade solicitada não possui tarifa |
+
+`calculate_charge()` recebe quantidade já expressa na unidade. Com arredondamento `UP`,
+qualquer fração iniciada vira uma unidade inteira; com `PROPORTIONAL`, a fração é
+preservada. A função rejeita `float`, quantidade não positiva e unidade desconhecida.
+Converter datas reais em horas, dias ou meses pertence ao futuro caso de uso de
+orçamento, que também registrará um snapshot do cálculo.
+
 ## Administração
 
 As classes de Admin configuram colunas, filtros e pesquisas dos módulos.
 `EstablishmentInline` permite editar unidades organizacionais na tela da organização.
 `CustomerAddressInline` permite registrar endereços dentro do cliente e seu formset
-preenche automaticamente a organização correta. Os métodos `display_cnpj()`,
-`display_document()` e `display_postal_code()` formatam dados sem mudar a persistência.
+preenche automaticamente a organização correta. `PricingPolicyInline` permite criar
+versões dentro do modelo de ferramenta e também herda a organização. Os métodos
+`display_cnpj()`, `display_document()` e `display_postal_code()` formatam dados sem
+mudar a persistência.
 
 O Admin acelera validação do domínio, mas não é a interface final e ainda não aplica
 escopo por organização ao usuário conectado.
