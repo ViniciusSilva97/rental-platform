@@ -1,20 +1,25 @@
 # Rental Platform
 
-Plataforma web para gestão de aluguel de ferramentas, construída como um monólito modular
-em Django. A base inclui organizações, estabelecimentos (matriz e filiais), usuários,
-categorias, modelos de ferramentas e unidades físicas individualizadas.
+Base técnica de uma plataforma para gestão de aluguel de ferramentas. O projeto usa
+Python e Django em um monólito modular, com PostgreSQL nos ambientes compartilhados e
+SQLite como alternativa de baixo atrito para desenvolvimento local.
 
-Os estabelecimentos aceitam CNPJs numéricos e alfanuméricos. O sistema armazena o CNPJ
-normalizado, sem máscara, e valida os dois dígitos verificadores conforme a regra oficial.
-Cada unidade física pode ser vinculada ao estabelecimento responsável pelo seu estoque.
+A versão `0.1.0` cobre:
+
+- usuários, organizações e vínculos de acesso;
+- matriz e filiais com CNPJ numérico ou alfanumérico;
+- categorias, modelos comerciais e unidades físicas de ferramentas;
+- vínculo obrigatório de cada unidade ao estabelecimento responsável;
+- painel administrativo, verificações de saúde e configuração por ambiente;
+- testes automatizados e integração contínua com PostgreSQL.
 
 ## Requisitos
 
-- Python 3.12 a 3.14
-- `uv`
-- Docker e Docker Compose, para executar com PostgreSQL
+- Python 3.12 a 3.14;
+- [uv](https://docs.astral.sh/uv/);
+- Docker e Docker Compose, se a execução for conteinerizada.
 
-## Execução rápida sem Docker
+## Execução local
 
 No PowerShell:
 
@@ -36,28 +41,70 @@ uv run python manage.py createsuperuser
 uv run python manage.py runserver
 ```
 
-Sem `DATABASE_URL`, o ambiente local usa SQLite. Essa opção serve para desenvolvimento
-rápido; o ambiente Docker e a produção usam PostgreSQL.
+Sem `DATABASE_URL`, o ambiente local usa `db.sqlite3`. Essa opção é destinada ao
+aprendizado e ao desenvolvimento rápido; Docker, CI e produção usam PostgreSQL.
 
 ## Execução com Docker
 
-```bash
-cp .env.example .env
+No PowerShell:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
 docker compose up --build
-docker compose exec web uv run python manage.py migrate
-docker compose exec web uv run python manage.py createsuperuser
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
 ```
 
-A aplicação estará em `http://localhost:8000` e o painel administrativo em
-`http://localhost:8000/admin/`.
+No Linux ou macOS:
 
-## Qualidade
+```bash
+cp .env.docker.example .env.docker
+docker compose up --build
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
+```
+
+A aplicação ficará em <http://localhost:8000> e o painel administrativo em
+<http://localhost:8000/admin/>.
+
+## Verificações
 
 ```bash
 uv run ruff check .
+uv run python manage.py makemigrations --check --dry-run
+uv run python manage.py check
 uv run pytest
 ```
 
+Os endpoints operacionais são:
+
+- `GET /health/`: alias mantido por compatibilidade;
+- `GET /health/live/`: confirma que o processo web responde;
+- `GET /health/ready/`: confirma que a aplicação consegue consultar o banco.
+
+## Configurações Django
+
+| Ambiente | Módulo | Banco |
+|---|---|---|
+| Desenvolvimento | `config.settings.development` | SQLite ou `DATABASE_URL` |
+| Testes | `config.settings.test` | SQLite em memória ou `DATABASE_URL` |
+| Produção | `config.settings.production` | PostgreSQL obrigatório |
+
+Em produção, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS` e `DATABASE_URL` são
+obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as variáveis.
+
+## Documentação
+
+- [Índice técnico](docs/index.md)
+- [Arquitetura](docs/architecture.md)
+- [Referência de classes e funções](docs/code-reference.md)
+- [Operação, Docker e testes](docs/operations.md)
+- [Decisões arquiteturais](docs/decisions.md)
+- [Auditoria da v0.1.0](docs/versions/v0.1.0.md)
+- [Contexto compacto para IA](docs/ai-context.md)
+
 ## Próximo incremento
 
-O próximo módulo será o fluxo de clientes, reservas e disponibilidade por período.
+A versão `0.2.0` deve introduzir clientes e endereços, mantendo dados pessoais
+separados do núcleo de estoque. Reservas, regras de preço e disponibilidade entram
+depois que esse cadastro estiver estável.

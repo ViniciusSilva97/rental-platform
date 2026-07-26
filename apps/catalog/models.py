@@ -104,8 +104,6 @@ class ToolUnit(TimeStampedModel):
         "organizations.Establishment",
         on_delete=models.PROTECT,
         related_name="tool_units",
-        null=True,
-        blank=True,
         help_text="Estabelecimento responsável pela unidade física.",
     )
     asset_code = models.CharField("código patrimonial", max_length=50)
