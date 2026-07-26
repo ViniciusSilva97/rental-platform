@@ -10,6 +10,7 @@ referência de manutenção e contexto confiável para ferramentas de IA.
 | [operations.md](operations.md) | execução local, Docker, produção, CI e observabilidade |
 | [decisions.md](decisions.md) | decisões arquiteturais e seus motivos |
 | [versions/v0.1.0.md](versions/v0.1.0.md) | escopo, auditoria e pendências da versão |
+| [versions/v0.2.0.md](versions/v0.2.0.md) | clientes, endereços e auditoria do incremento |
 | [ai-context.md](ai-context.md) | contexto compacto e regras para assistência por IA |
 
 ## Política de documentação por versão

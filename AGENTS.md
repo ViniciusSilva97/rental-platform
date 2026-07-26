@@ -6,12 +6,14 @@ Leia, nesta ordem, antes de alterar o projeto:
 2. `docs/ai-context.md`;
 3. `docs/architecture.md`;
 4. `docs/code-reference.md`;
-5. `docs/versions/v0.1.0.md`.
+5. `docs/versions/v0.2.0.md`.
 
 ## Regras do projeto
 
 - Preserve o monólito modular; não crie microsserviços sem uma necessidade medida.
 - Toda entidade pertencente ao negócio deve carregar `organization`.
+- Clientes podem ser pessoas físicas ou jurídicas; documentos são armazenados sem máscara.
+- Endereços de clientes e seus clientes devem pertencer à mesma organização.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.
 - Relacionamentos entre registros de organizações diferentes são inválidos.
 - Valores monetários usam `DecimalField`; nunca use `float`.
