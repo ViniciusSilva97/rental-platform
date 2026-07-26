@@ -36,12 +36,6 @@ class ToolModel(TimeStampedModel):
     brand = models.CharField("marca", max_length=100, blank=True)
     model_number = models.CharField("modelo", max_length=100, blank=True)
     description = models.TextField("descrição", blank=True)
-    daily_rate = models.DecimalField(
-        "valor da diária",
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0.00"))],
-    )
     deposit_amount = models.DecimalField(
         "valor da caução",
         max_digits=10,
@@ -57,10 +51,6 @@ class ToolModel(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["organization", "name", "brand", "model_number"],
                 name="unique_tool_model_per_organization",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(daily_rate__gte=0),
-                name="non_negative_daily_rate",
             ),
             models.CheckConstraint(
                 condition=models.Q(deposit_amount__gte=0),

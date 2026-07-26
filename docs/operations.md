@@ -89,9 +89,10 @@ O workflow do GitHub Actions sobe PostgreSQL 17, aplica migrations, executa lint
 testes e valida as configurações de produção com `check --deploy`. Isso encontra
 diferenças que uma suíte exclusivamente SQLite poderia esconder.
 
-Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, invariantes multi-tenant,
-valores monetários, estados iniciais e endpoints operacionais. A migration que torna
-o estabelecimento obrigatório também é exercitada sobre uma base anterior ao release.
+Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, políticas e cálculos de
+preço, invariantes multi-tenant, valores monetários, estados iniciais e endpoints
+operacionais. As migrations de estabelecimento e de conversão da diária legada são
+exercitadas sobre estados anteriores ao release.
 
 ## Recuperação e backup
 

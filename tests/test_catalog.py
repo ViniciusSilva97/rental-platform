@@ -19,7 +19,6 @@ def test_tool_unit_starts_available():
         name="Furadeira de impacto",
         brand="Bosch",
         model_number="GSB 13 RE",
-        daily_rate=Decimal("35.00"),
     )
 
     unit = ToolUnit.objects.create(
@@ -42,7 +41,6 @@ def test_asset_code_is_unique_inside_organization():
         organization=organization,
         category=category,
         name="Furadeira",
-        daily_rate=Decimal("20.00"),
     )
     ToolUnit.objects.create(
         organization=organization,
@@ -69,7 +67,6 @@ def test_tool_unit_can_be_assigned_to_establishment():
         organization=organization,
         category=category,
         name="Furadeira",
-        daily_rate=Decimal("20.00"),
     )
 
     unit = ToolUnit.objects.create(
@@ -93,7 +90,6 @@ def test_tool_model_rejects_category_from_another_organization():
             organization=organization_b,
             category=category,
             name="Furadeira",
-            daily_rate=Decimal("20.00"),
         )
 
 
@@ -107,7 +103,6 @@ def test_tool_unit_rejects_model_from_another_organization():
         organization=organization_a,
         category=category_a,
         name="Furadeira",
-        daily_rate=Decimal("20.00"),
     )
 
     with pytest.raises(ValidationError):
@@ -129,7 +124,6 @@ def test_tool_unit_rejects_establishment_from_another_organization():
         organization=organization_a,
         category=category,
         name="Furadeira",
-        daily_rate=Decimal("20.00"),
     )
 
     with pytest.raises(ValidationError):
@@ -142,14 +136,7 @@ def test_tool_unit_rejects_establishment_from_another_organization():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "daily_rate,deposit_amount",
-    [
-        (Decimal("-0.01"), Decimal("0.00")),
-        (Decimal("20.00"), Decimal("-0.01")),
-    ],
-)
-def test_tool_model_rejects_negative_money_values(daily_rate, deposit_amount):
+def test_tool_model_rejects_negative_deposit_amount():
     organization = Organization.objects.create(name="Locadora Exemplo", slug="locadora-exemplo")
     category = Category.objects.create(organization=organization, name="Furadeiras")
 
@@ -158,8 +145,7 @@ def test_tool_model_rejects_negative_money_values(daily_rate, deposit_amount):
             organization=organization,
             category=category,
             name="Furadeira",
-            daily_rate=daily_rate,
-            deposit_amount=deposit_amount,
+            deposit_amount=Decimal("-0.01"),
         )
 
 
@@ -171,7 +157,6 @@ def test_tool_unit_requires_establishment():
         organization=organization,
         category=category,
         name="Furadeira",
-        daily_rate=Decimal("20.00"),
     )
 
     with pytest.raises(ValidationError) as error:

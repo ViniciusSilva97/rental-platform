@@ -70,18 +70,26 @@ a responsabilidade física.
 **Migração:** unidades antigas são vinculadas à matriz ativa, ao primeiro
 estabelecimento existente ou a uma matriz criada pela própria migration.
 
-## ADR-006 — Preço futuro como política versionada
+## ADR-006 — Preço como política versionada
 
-**Status:** planejado.
+**Status:** aceito.
 
-**Decisão:** hora, dia e mês serão componentes de políticas com vigência. A definição
-de mês será configurável e o valor contratado será registrado como snapshot.
+**Decisão:** hora, dia e mês são valores opcionais de `PricingPolicy`; ao menos um deve
+existir. Cada versão possui `effective_from`, e a versão ativa mais recente já vigente
+substitui implicitamente a anterior. Mês pode significar uma quantidade fixa de dias
+ou mês-calendário. Frações são arredondadas para cima ou cobradas proporcionalmente.
 
 **Motivo:** preços mudam, arredondamentos variam e contratos antigos precisam permanecer
-reproduzíveis.
+reproduzíveis. Vigência definida somente pelo início evita intervalos sobrepostos e
+simplifica agendamento e consulta.
 
-**Adiado:** o campo `daily_rate` permanece na fundação e será migrado quando o agregado
-de preços for implementado.
+**Migração:** a diária existente em `ToolModel` é transformada em uma política inicial
+com a data de criação do modelo. O processo torna o campo antigo temporariamente
+anulável, copia os valores e só então remove a coluna, permitindo reversão segura.
+
+**Adiado:** o orçamento futuro converterá períodos reais em unidades e salvará um
+snapshot da política, quantidades, tarifas e total. Descontos e combinações de unidades
+não pertencem a esta versão.
 
 ## ADR-007 — Pagamento hospedado e IA assistiva
 
