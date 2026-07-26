@@ -15,11 +15,13 @@ flowchart TD
     APP --> CAT["catalog"]
     APP --> CUS["customers"]
     APP --> PRI["pricing"]
+    APP --> AST["assets"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
     CUS --> DB
     PRI --> DB
+    AST --> DB
 ```
 
 ## Módulos
@@ -31,6 +33,7 @@ flowchart TD
 | `catalog` | classificação, modelo comercial e ativo físico | contratos e pagamentos |
 | `customers` | pessoas físicas/jurídicas, contatos e endereços | reservas e contratos |
 | `pricing` | versões e cálculo elementar de preços | disponibilidade, descontos e contratos |
+| `assets` | dados patrimoniais vinculados à unidade física | depreciação e contabilidade |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
@@ -39,7 +42,9 @@ pertencem a uma organização; unidades também pertencem a um estabelecimento. 
 dependência inversa não existe. `customers` também depende de `organizations`, mas não
 depende de `catalog`; reservas futuras serão responsáveis por relacionar os domínios.
 `pricing` depende de `catalog` e `organizations`, pois cada política precifica um modelo
-de ferramenta dentro do mesmo tenant.
+de ferramenta dentro do mesmo tenant. `assets` também depende de `catalog` e
+`organizations`: ele complementa cada unidade física com dados patrimoniais, sem fazer
+o catálogo assumir regras contábeis.
 
 ## Isolamento por organização
 
@@ -56,10 +61,15 @@ Invariantes já implementadas:
 - existe no máximo uma matriz ativa por organização;
 - o mesmo CPF ou CNPJ não se repete dentro da organização;
 - endereços não podem relacionar clientes de outra organização;
-- existe no máximo um endereço principal ativo por cliente.
+- existe no máximo um endereço principal ativo por cliente;
 - políticas não podem relacionar modelos de outra organização;
 - cada modelo possui no máximo uma versão de preço por data de vigência;
-- toda política oferece ao menos um valor não negativo por hora, dia ou mês.
+- toda política oferece ao menos um valor não negativo por hora, dia ou mês;
+- cada unidade possui no máximo um perfil patrimonial;
+- perfil patrimonial e unidade pertencem à mesma organização;
+- valor residual não supera o custo de aquisição;
+- entrada em operação não antecede a aquisição;
+- vida útil patrimonial é positiva.
 
 O Django Admin atual é uma ferramenta interna de bootstrap e não representa ainda
 isolamento completo de tenant na interface. Antes de uso por clientes reais, os
@@ -100,8 +110,12 @@ Preço é uma política versionada, não apenas três colunas soltas. A versão 
 recente já vigente substitui implicitamente a anterior. Mês-calendário e quantidade
 fixa de dias são configurações explícitas; a conversão de um período real em unidades
 será responsabilidade do fluxo de orçamento.
-Depreciação dependerá de dados patrimoniais e eventos de manutenção; ela não deve ser
-calculada antes de esses fatos existirem.
+
+A v0.2.2 registra somente a base patrimonial necessária: aquisição, entrada em
+operação, custo, valor residual e vida útil. O valor depreciável exposto pelo domínio é
+apenas `custo - valor residual`. Método, competência, depreciação acumulada, impairment
+e revisão de estimativas continuam reservados à v0.5 e dependerão também dos eventos
+operacionais que ainda serão modelados.
 
 IA deverá consumir serviços internos com saídas estruturadas. O banco e as regras
 determinísticas continuarão sendo a fonte de verdade.

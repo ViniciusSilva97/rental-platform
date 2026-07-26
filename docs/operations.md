@@ -90,9 +90,10 @@ testes e valida as configurações de produção com `check --deploy`. Isso enco
 diferenças que uma suíte exclusivamente SQLite poderia esconder.
 
 Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, políticas e cálculos de
-preço, invariantes multi-tenant, valores monetários, estados iniciais e endpoints
-operacionais. As migrations de estabelecimento e de conversão da diária legada são
-exercitadas sobre estados anteriores ao release.
+preço, perfis patrimoniais, invariantes multi-tenant, valores monetários, estados
+iniciais e endpoints operacionais. Os fluxos inline com pai ainda não salvo também são
+exercitados. As migrations de estabelecimento e de conversão da diária legada são
+testadas sobre estados anteriores ao release.
 
 ## Recuperação e backup
 

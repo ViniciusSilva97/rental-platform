@@ -131,3 +131,23 @@ uma única regra de segurança para todas as entidades de negócio.
 
 **Controle:** `clean()` rejeita a relação cruzada e o formset do Admin herda a
 organização do cliente. Escritas em lote deverão preservar essa mesma invariante.
+
+## ADR-010 — Perfil patrimonial separado e opcional
+
+**Status:** aceito.
+
+**Decisão:** `AssetProfile` estende `ToolUnit` por uma relação um para um e repete
+`organization_id`. A unidade pode existir sem perfil, mas um perfil existente exige
+aquisição, entrada em operação, custo, valor residual e vida útil.
+
+**Motivo:** estoque operacional e mensuração patrimonial evoluem em ritmos diferentes.
+Separar os módulos evita campos contábeis vazios em todas as unidades e prepara
+depreciação sem fazer o catálogo assumir lançamentos ou relatórios contábeis.
+
+**Controles:** perfil e unidade devem compartilhar tenant; residual não supera custo;
+entrada em operação não antecede aquisição; vida útil é positiva. Constraints repetem
+as regras determinísticas no banco.
+
+**Adiado:** método de depreciação, competência mensal, valor acumulado, impairment,
+revisão de estimativas e lançamentos pertencem à v0.5. O valor depreciável atual é
+somente `custo - residual`.
