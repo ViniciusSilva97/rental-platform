@@ -43,6 +43,10 @@ def assign_units_to_establishments(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # PostgreSQL must commit the foreign-key backfill before rebuilding the
+    # constraint as NOT NULL, otherwise deferred trigger events block ALTER TABLE.
+    atomic = False
+
     dependencies = [
         ("catalog", "0002_toolunit_establishment_alter_toolmodel_daily_rate_and_more"),
         ("organizations", "0002_establishment"),
@@ -52,6 +56,7 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             assign_units_to_establishments,
             reverse_code=migrations.RunPython.noop,
+            atomic=True,
         ),
         migrations.AlterField(
             model_name="toolunit",
