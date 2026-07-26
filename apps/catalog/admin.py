@@ -8,7 +8,7 @@ from .models import Category, ToolModel, ToolUnit
 
 class PricingPolicyInlineFormSet(BaseInlineFormSet):
     def save_new(self, form, commit=True):
-        policy = form.save(commit=False)
+        policy = super().save_new(form, commit=False)
         policy.organization_id = self.instance.organization_id
         if commit:
             policy.save()

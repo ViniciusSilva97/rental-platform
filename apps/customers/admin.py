@@ -6,7 +6,7 @@ from .models import Customer, CustomerAddress
 
 class CustomerAddressInlineFormSet(BaseInlineFormSet):
     def save_new(self, form, commit=True):
-        address = form.save(commit=False)
+        address = super().save_new(form, commit=False)
         address.organization_id = self.instance.organization_id
         if commit:
             address.save()

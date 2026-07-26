@@ -262,7 +262,12 @@ def test_calculate_charge_rejects_invalid_quantity(quantity):
 @pytest.mark.django_db
 def test_pricing_inline_inherits_tool_model_organization():
     organization = Organization.objects.create(name="Locadora Exemplo", slug="locadora-exemplo")
-    tool_model = create_tool_model(organization=organization)
+    category = Category.objects.create(organization=organization, name="Furadeiras")
+    tool_model = ToolModel(
+        organization=organization,
+        category=category,
+        name="Furadeira",
+    )
     policy_formset = inlineformset_factory(
         ToolModel,
         PricingPolicy,
@@ -303,5 +308,7 @@ def test_pricing_inline_inherits_tool_model_organization():
     )
 
     assert formset.is_valid(), formset.errors
+    tool_model.save()
     policy = formset.save()[0]
     assert policy.organization == organization
+    assert policy.tool_model == tool_model

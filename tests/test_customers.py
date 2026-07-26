@@ -214,7 +214,7 @@ def test_customer_has_only_one_active_main_address():
 @pytest.mark.django_db
 def test_customer_address_inline_inherits_customer_organization():
     organization = Organization.objects.create(name="Locadora Exemplo", slug="locadora-exemplo")
-    customer = Customer.objects.create(
+    customer = Customer(
         organization=organization,
         name="Maria da Silva",
         document="529.982.247-25",
@@ -257,5 +257,7 @@ def test_customer_address_inline_inherits_customer_organization():
     )
 
     assert formset.is_valid(), formset.errors
+    customer.save()
     address = formset.save()[0]
     assert address.organization == organization
+    assert address.customer == customer
