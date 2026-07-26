@@ -13,9 +13,11 @@ flowchart TD
     APP --> ACC["accounts"]
     APP --> ORG["organizations"]
     APP --> CAT["catalog"]
+    APP --> CUS["customers"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
+    CUS --> DB
 ```
 
 ## Módulos
@@ -25,12 +27,14 @@ flowchart TD
 | `accounts` | identidade e autenticação | dados de cliente ou regras de locação |
 | `organizations` | tenant, estabelecimentos e acesso interno | catálogo e preços |
 | `catalog` | classificação, modelo comercial e ativo físico | contratos e pagamentos |
+| `customers` | pessoas físicas/jurídicas, contatos e endereços | reservas e contratos |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
 `catalog` depende conceitualmente de `organizations`: categorias, modelos e unidades
 pertencem a uma organização; unidades também pertencem a um estabelecimento. A
-dependência inversa não existe.
+dependência inversa não existe. `customers` também depende de `organizations`, mas não
+depende de `catalog`; reservas futuras serão responsáveis por relacionar os domínios.
 
 ## Isolamento por organização
 
@@ -44,7 +48,10 @@ Invariantes já implementadas:
 - modelos só aceitam categorias da mesma organização;
 - códigos patrimoniais são únicos dentro da organização;
 - unidades só aceitam modelo e estabelecimento da mesma organização;
-- existe no máximo uma matriz ativa por organização.
+- existe no máximo uma matriz ativa por organização;
+- o mesmo CPF ou CNPJ não se repete dentro da organização;
+- endereços não podem relacionar clientes de outra organização;
+- existe no máximo um endereço principal ativo por cliente.
 
 O Django Admin atual é uma ferramenta interna de bootstrap e não representa ainda
 isolamento completo de tenant na interface. Antes de uso por clientes reais, os
@@ -72,12 +79,14 @@ devem validar seus próprios dados e continuam protegidos apenas pelas constrain
 | Versão | Resultado principal |
 |---|---|
 | `0.1.x` | fundação operacional, organizações e catálogo |
-| `0.2.x` | clientes e endereços |
-| `0.3.x` | política de preço por hora, dia e mês |
-| `0.4.x` | reservas e disponibilidade |
-| `0.5.x` | contratos, retirada, devolução e inspeção |
+| `0.2.0` | clientes e endereços |
+| `0.2.1` | política de preço por hora, dia e mês |
+| `0.2.2` | base patrimonial dos ativos |
+| `0.3.x` | orçamentos, reservas e disponibilidade |
+| `0.4.x` | contratos, retirada, devolução e inspeção |
+| `0.5.x` | depreciação de ativos |
 | `0.6.x` | checkout hospedado e webhooks |
-| futura | depreciação de ativos e IA assistiva |
+| `0.7.x` | aplicativo móvel e IA assistiva |
 
 Preço será uma política versionada, não apenas três colunas soltas. O mês deverá
 suportar definições configuráveis, como mês-calendário ou quantidade fixa de dias.

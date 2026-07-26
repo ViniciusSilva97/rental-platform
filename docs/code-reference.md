@@ -15,10 +15,15 @@ Modelo abstrato herdado pelas entidades de domínio.
 Como é abstrato, não cria uma tabela própria. Os timestamps não constituem trilha de
 auditoria: versões futuras ainda precisarão registrar quem realizou alterações críticas.
 
-### Funções de CNPJ em `common.documents`
+### Funções de CPF e CNPJ em `common.documents`
 
 | Função | Contrato |
 |---|---|
+| `normalize_cpf(value)` | remove máscara e espaços do CPF |
+| `_calculate_cpf_digit(characters, weights)` | aplica pesos e módulo 11 a um dígito do CPF |
+| `calculate_cpf_check_digits(value)` | recebe nove números e devolve os dois verificadores |
+| `validate_cpf(value)` | valida formato, repetição e verificadores do CPF |
+| `format_cpf(value)` | aplica a máscara visual do CPF |
 | `normalize_cnpj(value)` | remove `.`, `-`, `/` e espaços; converte letras para maiúsculas |
 | `_calculate_check_digit(characters, weights)` | aplica pesos e módulo 11 a uma sequência já validada |
 | `calculate_cnpj_check_digits(value)` | recebe exatamente as 12 posições-base e devolve dois dígitos |
@@ -28,6 +33,17 @@ auditoria: versões futuras ainda precisarão registrar quem realizou alteraçõ
 Nas 12 primeiras posições, letras são convertidas pelo valor `ord(caractere) - 48`;
 as duas últimas posições são obrigatoriamente numéricas. O modelo guarda a forma
 normalizada para que máscara e diferenças de caixa não criem duplicatas.
+
+### Funções de CEP em `common.locations`
+
+| Função | Contrato |
+|---|---|
+| `normalize_brazilian_postal_code(value)` | remove hífen e espaços |
+| `validate_brazilian_postal_code(value)` | exige exatamente oito números |
+| `format_brazilian_postal_code(value)` | apresenta o CEP no formato `00000-000` |
+
+O primeiro incremento de endereços é brasileiro. A função está nomeada explicitamente
+para não tratar o formato de CEP como uma regra postal universal.
 
 ### Views operacionais em `common.views`
 
@@ -100,6 +116,50 @@ Constraints garantem nome único dentro da organização, formato normalizado e 
 uma matriz ativa. Uma organização pode existir temporariamente sem matriz; a camada de
 onboarding deverá criar ambas em uma única transação.
 
+## `customers`
+
+### `Customer`
+
+Representa uma pessoa física ou jurídica atendida por uma organização.
+
+| Elemento | Comportamento |
+|---|---|
+| `kind` | `INDIVIDUAL` para pessoa física ou `COMPANY` para jurídica |
+| `name` | nome completo ou razão social |
+| `trade_name` | nome fantasia opcional |
+| `document` | CPF ou CNPJ obrigatório, armazenado sem máscara |
+| `email`, `phone` | contatos opcionais |
+| `notes` | observações internas |
+| `active` | desativação lógica sem apagar histórico |
+| `clean()` | normaliza e valida o documento de acordo com o tipo |
+| `save()` | executa `full_clean()` antes da escrita |
+| `formatted_document` | escolhe a máscara de CPF ou CNPJ |
+| `__str__()` | devolve o nome do cliente |
+
+`unique_customer_document_per_organization` impede duplicidade dentro da locadora, mas
+permite que a mesma pessoa seja cliente de organizações diferentes. A constraint
+`customer_document_matches_kind` protege o formato normalizado no banco.
+
+### `CustomerAddress`
+
+Representa um endereço brasileiro vinculado ao cliente.
+
+| Elemento | Comportamento |
+|---|---|
+| `kind` | principal, cobrança, entrega ou outro |
+| `postal_code` | CEP normalizado com oito números |
+| `street`, `number`, `complement`, `district` | componentes do logradouro |
+| `city`, `state`, `country` | localidade; UF e país são armazenados em maiúsculas |
+| `active` | permite desativar sem apagar |
+| `clean()` | normaliza localidade e impede relacionamento entre organizações |
+| `save()` | normaliza e valida antes da escrita |
+| `formatted_postal_code` | apresenta o CEP com máscara |
+| `__str__()` | resume logradouro, cidade e UF |
+
+Cada endereço repete `organization_id` de propósito. Isso permite escopo direto por
+tenant e segue a regra geral dos dados de negócio. A constraint
+`unique_active_main_address_per_customer` permite apenas um endereço principal ativo.
+
 ## `catalog`
 
 ### `Category`
@@ -151,10 +211,11 @@ transacional com regras explícitas e histórico.
 
 ## Administração
 
-As classes `OrganizationAdmin`, `MembershipAdmin`, `EstablishmentAdmin`,
-`CategoryAdmin`, `ToolModelAdmin` e `ToolUnitAdmin` configuram colunas, filtros e
-pesquisas. `EstablishmentInline` permite editar unidades organizacionais na tela da
-organização. `display_cnpj()` mostra o CNPJ formatado sem mudar o dado persistido.
+As classes de Admin configuram colunas, filtros e pesquisas dos módulos.
+`EstablishmentInline` permite editar unidades organizacionais na tela da organização.
+`CustomerAddressInline` permite registrar endereços dentro do cliente e seu formset
+preenche automaticamente a organização correta. Os métodos `display_cnpj()`,
+`display_document()` e `display_postal_code()` formatam dados sem mudar a persistência.
 
 O Admin acelera validação do domínio, mas não é a interface final e ainda não aplica
 escopo por organização ao usuário conectado.

@@ -93,3 +93,33 @@ não decidirá preço, estoque, contrato ou finanças.
 
 **Motivo:** reduz escopo de segurança, conformidade, custo operacional e risco de
 respostas não determinísticas.
+
+## ADR-008 — Cliente unificado e documento por organização
+
+**Status:** aceito.
+
+**Decisão:** `Customer` representa pessoa física e jurídica por meio de `kind`; um único
+campo `document` armazena CPF ou CNPJ normalizado. A unicidade é composta por
+organização e documento.
+
+**Motivo:** os dois tipos compartilham identidade operacional, contatos, endereços e
+futuras locações. Modelos separados duplicariam fluxos. A mesma pessoa pode negociar
+com locadoras diferentes, por isso o documento não é globalmente único.
+
+**Controles:** o tipo determina o algoritmo de validação; uma constraint confirma o
+formato no banco; documentos só são mascarados na apresentação.
+
+## ADR-009 — Endereço com tenant explícito
+
+**Status:** aceito.
+
+**Decisão:** `CustomerAddress` armazena `organization_id`, mesmo sendo possível chegar
+à organização através do cliente.
+
+**Motivo:** consultas operacionais podem ser escopadas diretamente pelo tenant e seguem
+uma única regra de segurança para todas as entidades de negócio.
+
+**Risco:** cliente e endereço poderiam apontar para organizações diferentes.
+
+**Controle:** `clean()` rejeita a relação cruzada e o formset do Admin herda a
+organização do cliente. Escritas em lote deverão preservar essa mesma invariante.
