@@ -7,6 +7,23 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: rental_test
+          POSTGRES_USER: rental
+          POSTGRES_PASSWORD: rental
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rental -d rental_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://rental:rental@127.0.0.1:5432/rental_test
+      DJANGO_SETTINGS_MODULE: config.settings.test
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -15,5 +32,14 @@ jobs:
           enable-cache: true
       - run: uv sync --all-groups
       - run: uv run ruff check .
+      - run: uv run python manage.py migrate --noinput
       - run: uv run pytest
-
+      - name: Check production settings
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          DJANGO_SECRET_KEY: ci-only-secret-key-with-more-than-fifty-characters-123456789
+          DJANGO_ALLOWED_HOSTS: example.com
+          DJANGO_SECURE_HSTS_SECONDS: "31536000"
+          DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS: "true"
+          DJANGO_SECURE_HSTS_PRELOAD: "true"
+        run: uv run python manage.py check --deploy --fail-level WARNING

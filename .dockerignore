@@ -3,11 +3,10 @@
 .venv
 __pycache__
 *.pyc
-.env
+.env*
 .coverage
 .pytest_cache
 .ruff_cache
 db.sqlite3
 media
 staticfiles
-

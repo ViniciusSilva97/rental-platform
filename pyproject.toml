@@ -21,7 +21,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings"
+DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py"]
 addopts = "--strict-markers --disable-warnings --cov=apps --cov=common --cov-report=term-missing"
 
