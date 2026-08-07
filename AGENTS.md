@@ -6,7 +6,7 @@ Leia, nesta ordem, antes de alterar o projeto:
 2. `docs/ai-context.md`;
 3. `docs/architecture.md`;
 4. `docs/code-reference.md`;
-5. `docs/versions/v0.2.1.md`.
+5. `docs/versions/v0.2.2.md`.
 
 ## Regras do projeto
 
@@ -15,6 +15,9 @@ Leia, nesta ordem, antes de alterar o projeto:
 - Clientes podem ser pessoas físicas ou jurídicas; documentos são armazenados sem máscara.
 - Endereços de clientes e seus clientes devem pertencer à mesma organização.
 - Políticas de preço pertencem à mesma organização do modelo de ferramenta.
+- Perfis patrimoniais pertencem à mesma organização da unidade física.
+- O valor residual não pode superar o custo de aquisição.
+- A entrada em operação não pode anteceder a aquisição.
 - A versão vigente é a política ativa mais recente cuja data já começou.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.
 - Relacionamentos entre registros de organizações diferentes são inválidos.

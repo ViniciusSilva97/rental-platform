@@ -1,6 +1,6 @@
 # Contexto compacto para IA
 
-Projeto Django 5.2 chamado Rental Platform, versão `0.2.1`. Arquitetura: monólito
+Projeto Django 5.2 chamado Rental Platform, versão `0.2.2`. Arquitetura: monólito
 modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento.
 
 ## Fonte de verdade
@@ -10,6 +10,7 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 - `apps/catalog`: categoria, modelo comercial e unidade física.
 - `apps/customers`: pessoa física/jurídica, contatos e endereços.
 - `apps/pricing`: políticas versionadas e cálculo elementar de preço.
+- `apps/assets`: perfil patrimonial opcional da unidade física.
 - `common`: UUID/timestamps, CPF, CNPJ, CEP e health checks.
 - `config/settings`: ambientes.
 - `docs/decisions.md`: decisões aceitas e planejadas.
@@ -25,15 +26,17 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 7. Dinheiro usa decimal e não pode ser negativo.
 8. Política de preço e modelo pertencem à mesma organização.
 9. Cada política possui ao menos um valor por hora, dia ou mês.
-10. Produção exige PostgreSQL, segredo e hosts.
-11. IA não é fonte autoritativa de regra de negócio.
-12. Pagamentos futuros não usam integração bancária direta.
+10. Perfil patrimonial e unidade pertencem à mesma organização.
+11. Valor residual não supera o custo e entrada em operação não antecede aquisição.
+12. Produção exige PostgreSQL, segredo e hosts.
+13. IA não é fonte autoritativa de regra de negócio.
+14. Pagamentos futuros não usam integração bancária direta.
 
 ## Próxima mudança recomendada
 
-Adicionar a base patrimonial das unidades: data e custo de aquisição, valor residual,
-vida útil e dados necessários para depreciação futura. Não calcular depreciação, criar
-reservas, integrar pagamentos ou ampliar a API no mesmo incremento.
+Adicionar orçamentos, reservas e disponibilidade por período usando clientes, unidades
+físicas e políticas de preço existentes. Não misturar contratos, pagamentos,
+depreciação ou uma API pública no mesmo incremento.
 
 ## Como propor mudanças
 

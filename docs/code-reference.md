@@ -249,13 +249,42 @@ preservada. A função rejeita `float`, quantidade não positiva e unidade desco
 Converter datas reais em horas, dias ou meses pertence ao futuro caso de uso de
 orçamento, que também registrará um snapshot do cálculo.
 
+## `assets`
+
+### `AssetProfile`
+
+Complementa uma unidade física com os dados necessários para gestão patrimonial.
+A relação é opcional para manter compatibilidade com unidades já cadastradas, mas,
+quando o perfil existe, seus dados essenciais são obrigatórios.
+
+| Elemento | Comportamento |
+|---|---|
+| `organization` | tenant explícito do perfil |
+| `tool_unit` | unidade física associada; relação um para um |
+| `acquisition_date` | data de aquisição do ativo |
+| `placed_in_service_date` | início da disponibilidade operacional |
+| `acquisition_cost` | custo de aquisição não negativo |
+| `residual_value` | valor residual não negativo e limitado ao custo |
+| `useful_life_months` | estimativa de vida útil positiva, em meses |
+| `supplier_name`, `invoice_number`, `notes` | dados complementares opcionais |
+| `clean()` | valida tenant, datas e relação entre custo e residual |
+| `save()` | executa `full_clean()` antes da escrita |
+| `depreciable_amount` | retorna `acquisition_cost - residual_value` |
+| `__str__()` | identifica o perfil pelo código patrimonial da unidade |
+
+Constraints de banco repetem as regras numéricas e cronológicas determinísticas.
+`depreciable_amount` é somente a base depreciável; não representa uma parcela ou
+lançamento de depreciação.
+
 ## Administração
 
 As classes de Admin configuram colunas, filtros e pesquisas dos módulos.
 `EstablishmentInline` permite editar unidades organizacionais na tela da organização.
 `CustomerAddressInline` permite registrar endereços dentro do cliente e seu formset
 preenche automaticamente a organização correta. `PricingPolicyInline` permite criar
-versões dentro do modelo de ferramenta e também herda a organização. Os métodos
+versões dentro do modelo de ferramenta e também herda a organização.
+`AssetProfileInline` permite registrar o perfil patrimonial dentro da unidade física;
+seu formset preserva o pai ainda não salvo e atribui o tenant. Os métodos
 `display_cnpj()`, `display_document()` e `display_postal_code()` formatam dados sem
 mudar a persistência.
 
