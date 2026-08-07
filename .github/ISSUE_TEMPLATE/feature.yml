@@ -1,0 +1,62 @@
+name: Funcionalidade
+description: Proponha uma entrega de produto ou melhoria técnica com critérios verificáveis.
+title: "[feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Descreva o resultado necessário, não apenas uma solução imaginada.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objetivo
+      description: Qual resultado de negócio ou técnico deve existir?
+      placeholder: Ao concluir esta Issue, o usuário conseguirá...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Qual problema, regra ou evidência justifica a mudança?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Escopo
+      description: Liste as entregas em formato de checklist.
+      placeholder: |
+        - [ ] Entrega 1
+        - [ ] Entrega 2
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceitação
+      description: Escreva condições objetivas que possam ser testadas.
+      placeholder: |
+        - O sistema...
+        - Um teste comprova...
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependências
+      description: Informe Issues, decisões ou versões anteriores necessárias.
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Fora do escopo
+      description: Registre o que não será implementado nesta Issue.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Riscos e observações
+      description: Considere tenant, segurança, dados, concorrência e operação.
