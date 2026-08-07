@@ -34,9 +34,9 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 
 ## Próxima mudança recomendada
 
-Adicionar orçamentos, reservas e disponibilidade por período usando clientes, unidades
-físicas e políticas de preço existentes. Não misturar contratos, pagamentos,
-depreciação ou uma API pública no mesmo incremento.
+Executar a v0.3.0 na ordem das dependências: contexto automático da locadora, cadastro
+assistido, orçamento reproduzível e reserva sem sobreposição. Não iniciar reservas antes
+de existir isolamento de tenant na camada de aplicação.
 
 ## Como propor mudanças
 
@@ -45,3 +45,12 @@ depreciação ou uma API pública no mesmo incremento.
 - teste sucesso, rejeições e isolamento por organização;
 - atualize documentação e auditoria da versão;
 - não crie abstrações para requisitos apenas imaginados.
+
+## Fluxo obrigatório no GitHub
+
+- nenhuma mudança começa sem Issue aceita;
+- branches usam `agent/issue-{número}-{descrição}`;
+- Pull Requests começam como rascunho e contêm `Closes #N`;
+- CI, autorrevisão, Code Review e teste funcional precedem o merge;
+- mudanças fora do escopo viram outra Issue;
+- a `main` não recebe alterações diretas.

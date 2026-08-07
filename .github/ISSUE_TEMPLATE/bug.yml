@@ -1,0 +1,57 @@
+name: Defeito
+description: Registre um comportamento incorreto com reprodução e evidências.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Resumo
+      description: O que está errado e qual o impacto?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Acesse...
+        2. Preencha...
+        3. Clique...
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Resultado atual
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidências
+      description: Inclua mensagens, logs sanitizados, imagens ou dados mínimos.
+  - type: input
+    id: version
+    attributes:
+      label: Versão ou commit
+      placeholder: v0.3.0 ou SHA
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Informe navegador, sistema, Docker e banco quando relevantes.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Segurança dos dados
+      options:
+        - label: Removi senhas, tokens, documentos pessoais e outros segredos das evidências.
+          required: true

@@ -3,10 +3,25 @@
 Leia, nesta ordem, antes de alterar o projeto:
 
 1. `README.md`;
-2. `docs/ai-context.md`;
-3. `docs/architecture.md`;
-4. `docs/code-reference.md`;
-5. `docs/versions/v0.2.2.md`.
+2. `CONTRIBUTING.md`;
+3. `docs/development-workflow.md`;
+4. `docs/ai-context.md`;
+5. `docs/architecture.md`;
+6. `docs/code-reference.md`;
+7. `docs/versions/v0.2.2.md`.
+
+## Fluxo obrigatório de mudança
+
+1. confirme uma Issue aberta com objetivo, escopo e critérios de aceite;
+2. trabalhe em uma branch `agent/issue-{número}-{descrição}`;
+3. mantenha commits pequenos, intencionais e vinculados ao escopo;
+4. abra o Pull Request como rascunho e inclua `Closes #N`;
+5. execute CI, autorrevisão e Code Review;
+6. aguarde o teste funcional antes de marcar o PR como pronto;
+7. faça merge somente após atender todos os critérios.
+
+Não altere a `main` diretamente e não amplie silenciosamente o escopo da Issue.
+Descobertas fora do escopo devem virar uma nova Issue.
 
 ## Regras do projeto
 

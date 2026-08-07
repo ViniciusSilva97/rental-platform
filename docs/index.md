@@ -5,6 +5,8 @@ referência de manutenção e contexto confiável para ferramentas de IA.
 
 | Documento | Conteúdo |
 |---|---|
+| [../CONTRIBUTING.md](../CONTRIBUTING.md) | preparação e regras para contribuir |
+| [development-workflow.md](development-workflow.md) | Issues, branches, revisão e conclusão |
 | [architecture.md](architecture.md) | limites, dependências e fluxos da aplicação |
 | [code-reference.md](code-reference.md) | classes, funções, validações e responsabilidades |
 | [operations.md](operations.md) | execução local, Docker, produção, CI e observabilidade |

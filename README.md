@@ -102,6 +102,8 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 ## Documentação
 
 - [Índice técnico](docs/index.md)
+- [Como contribuir](CONTRIBUTING.md)
+- [Fluxo de desenvolvimento e Code Review](docs/development-workflow.md)
 - [Arquitetura](docs/architecture.md)
 - [Referência de classes e funções](docs/code-reference.md)
 - [Operação, Docker e testes](docs/operations.md)
@@ -114,5 +116,6 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 
 ## Próximo incremento
 
-A versão `0.3.0` introduzirá orçamentos, reservas e disponibilidade por período,
-consumindo clientes, unidades físicas e políticas de preço já estabilizados.
+A versão `0.3.0` começa pelo contexto automático da locadora e pelo cadastro
+assistido de ferramentas. Orçamentos, disponibilidade e reservas serão adicionados em
+Issues dependentes, evitando construir os fluxos comerciais sobre formulários técnicos.
