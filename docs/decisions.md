@@ -170,3 +170,28 @@ transação. Assim, uma falha no CNPJ ou na unidade não deixa um tenant incompl
 
 **Limites:** o Admin permanece técnico e não herda automaticamente o contexto. Não há
 cadastro público, assinatura do SaaS ou matriz detalhada de permissões nesta decisão.
+
+## ADR-012 — Códigos internos por sequência transacional
+
+**Status:** aceito.
+
+**Decisão:** cada organização possui uma `AssetCodeSequence`. O cadastro em lote bloqueia
+a linha da organização, reserva uma faixa numérica e cria códigos legíveis no formato
+`EQ-000001`. Modelo, preço, equipamentos, perfis e avanço do contador compartilham a
+mesma transação.
+
+**Motivo:** calcular o próximo valor por contagem ou maior código sofre condição de
+corrida. Uma sequência por tenant preserva legibilidade, permite lotes e tem baixo custo
+operacional. Bloquear `Organization` resolve também a concorrência quando a sequência
+ainda não existe.
+
+**Controles:** `next_value` é positivo, existe uma sequência por organização e o código
+continua único por tenant. A CI com PostgreSQL executa dois lotes simultâneos e exige
+dez códigos distintos.
+
+**Consequência:** rollback pode reutilizar uma faixa que nunca se tornou visível, pois
+contador e lote voltam juntos. Lacunas futuras são aceitáveis; código interno identifica
+o equipamento, mas não é numeração fiscal.
+
+**Adiado:** prefixos configuráveis, importação, QR Code e etiquetas pertencem a Issues
+futuras.

@@ -76,6 +76,28 @@ class ToolModel(TimeStampedModel):
         return super().save(*args, **kwargs)
 
 
+class AssetCodeSequence(TimeStampedModel):
+    organization = models.OneToOneField(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="asset_code_sequence",
+    )
+    next_value = models.PositiveBigIntegerField("próximo número", default=1)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(next_value__gte=1),
+                name="positive_asset_code_next_value",
+            )
+        ]
+        verbose_name = "sequência de códigos internos"
+        verbose_name_plural = "sequências de códigos internos"
+
+    def __str__(self) -> str:
+        return f"{self.organization} — próximo EQ-{self.next_value:06d}"
+
+
 class ToolUnit(TimeStampedModel):
     class Status(models.TextChoices):
         AVAILABLE = "AVAILABLE", "Disponível"
@@ -110,8 +132,8 @@ class ToolUnit(TimeStampedModel):
                 name="unique_asset_code_per_organization",
             )
         ]
-        verbose_name = "unidade de ferramenta"
-        verbose_name_plural = "unidades de ferramentas"
+        verbose_name = "equipamento físico"
+        verbose_name_plural = "equipamentos físicos"
 
     def __str__(self) -> str:
         return f"{self.asset_code} — {self.tool_model}"

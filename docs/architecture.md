@@ -57,6 +57,7 @@ Invariantes já implementadas:
 - nomes de categoria são únicos dentro da organização;
 - modelos só aceitam categorias da mesma organização;
 - códigos patrimoniais são únicos dentro da organização;
+- cada organização possui uma única sequência positiva de códigos internos;
 - unidades só aceitam modelo e estabelecimento da mesma organização;
 - existe no máximo uma matriz ativa por organização;
 - o mesmo CPF ou CNPJ não se repete dentro da organização;
@@ -85,6 +86,23 @@ request e filtrar todos os relacionamentos por ele.
 
 O Django Admin permanece uma ferramenta técnica de bootstrap e não aplica esse escopo
 automaticamente. Ele não deve ser oferecido como interface normal ao cliente.
+
+### Cadastro assistido de ferramentas
+
+`create_tool_batch()` é a fronteira transacional do cadastro operacional. O serviço
+bloqueia a linha de `Organization` com `select_for_update()`, reserva uma faixa em
+`AssetCodeSequence` e cria categoria, modelo, política de preço opcional, equipamentos
+e perfis patrimoniais opcionais dentro da mesma transação.
+
+O bloqueio na organização também protege a primeira criação da sequência. Dois lotes
+concorrentes da mesma locadora esperam um pelo outro e recebem faixas distintas; lotes
+de locadoras diferentes continuam independentes. A unicidade composta de `ToolUnit`
+permanece como defesa adicional no banco.
+
+A interface nunca recebe `organization`. Categorias e estabelecimentos são filtrados
+por `request.organization`; uma única unidade é selecionada automaticamente e, quando
+há filiais, a matriz é a sugestão inicial. Cada equipamento nasce como `AVAILABLE`.
+Dados comuns de aquisição só geram perfis após confirmação explícita do usuário.
 
 ## Persistência
 

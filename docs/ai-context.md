@@ -33,12 +33,14 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 14. Pagamentos futuros não usam integração bancária direta.
 15. O tenant operacional vem de `request.organization`, nunca de um ID livre do cliente.
 16. Sessão, vínculo e organização devem estar ativos antes de liberar o contexto.
+17. Códigos `EQ-NNNNNN` são reservados por `AssetCodeSequence` dentro da transação.
+18. Lotes usam `create_tool_batch()`; nunca calcule código por contagem ou maior valor.
+19. Todo queryset da área operacional deve usar `request.organization`.
 
 ## Próxima mudança recomendada
 
-Concluir a Issue #7 de contexto automático da locadora e, depois, executar a Issue #8
-de cadastro assistido e códigos internos. Orçamento e reserva permanecem dependentes
-dessas duas fundações.
+Executar a Issue #9 de orçamento reproduzível sobre o contexto seguro e o cadastro
+assistido. Reserva permanece dependente do snapshot de preço e não deve ser antecipada.
 
 ## Como propor mudanças
 

@@ -214,6 +214,12 @@ A unicidade composta evita duplicar a mesma combinação de nome, marca e modelo
 organização. Preços pertencem ao módulo `pricing`; o catálogo não decide mais uma
 diária diretamente.
 
+### `AssetCodeSequence`
+
+Mantém o próximo número interno de cada organização. A relação um para um impede duas
+sequências para o mesmo tenant e a constraint exige `next_value >= 1`. A classe não é
+um contador global: cada locadora começa em `EQ-000001`.
+
 ### `ToolUnit`
 
 Representa um ativo físico individual que pode ser reservado, alugado, inspecionado ou
@@ -236,6 +242,33 @@ Estados existentes: `AVAILABLE`, `RESERVED`, `RENTED`, `INSPECTION`, `MAINTENANC
 `DAMAGED` e `INACTIVE`. A enumeração limita valores, mas ainda não controla transições.
 Quando locações forem implementadas, mudanças de estado deverão passar por um serviço
 transacional com regras explícitas e histórico.
+
+### Serviços do cadastro assistido
+
+| Elemento | Contrato |
+|---|---|
+| `PricingConfiguration` | dados imutáveis da política opcional criada com o modelo |
+| `AssetConfiguration` | dados comuns, por equipamento, que serão copiados para o lote |
+| `ToolBatchResult` | categoria, modelo, unidades, política e perfis efetivamente criados |
+| `_normalize_serial_numbers(...)` | alinha uma posição por equipamento e rejeita repetições no lote |
+| `_allocate_asset_codes(...)` | reserva uma faixa contínua e avança a sequência transacional |
+| `create_tool_batch(...)` | valida tenant e cria o lote completo dentro de `transaction.atomic` |
+
+O limite atual é 100 equipamentos por operação. `create_tool_batch()` bloqueia a
+organização antes de tocar a sequência; por isso `max(asset_code) + 1` e
+`ToolUnit.objects.count()` nunca devem ser usados para gerar códigos.
+
+### Formulário e views operacionais
+
+| Elemento | Responsabilidade |
+|---|---|
+| `AssistedToolRegistrationForm` | filtra relacionamentos pelo tenant e organiza as quatro etapas |
+| `assisted_registration()` | usa somente `request.organization` e reporta rollback/conflitos |
+| `equipment_list()` | lista exclusivamente equipamentos da locadora ativa |
+
+As etapas visuais são modelo, equipamentos, preços e aquisição. Preço e perfil
+patrimonial são opcionais. A confirmação patrimonial é obrigatória antes de copiar
+custo, datas, vida útil, fornecedor e documento para todos os equipamentos.
 
 ## `pricing`
 

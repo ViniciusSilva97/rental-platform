@@ -6,6 +6,11 @@
 <h1>{{ organization.name }}</h1>
 <p>Sua locadora está ativa. As próximas operações usarão este contexto automaticamente.</p>
 
+<div class="actions">
+    <a class="button" href="{% url 'catalog:assisted-registration' %}">Cadastrar ferramentas</a>
+    <a class="button secondary" href="{% url 'catalog:equipment-list' %}">Ver equipamentos</a>
+</div>
+
 <h2>Unidades</h2>
 <ul>
     {% for establishment in establishments %}
