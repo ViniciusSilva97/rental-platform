@@ -70,8 +70,17 @@ docker compose exec web python manage.py migrate
 docker compose exec web python manage.py createsuperuser
 ```
 
-A aplicação ficará em <http://localhost:8000> e o painel administrativo em
+A aplicação ficará em <http://localhost:8000>, a área da locadora em
+<http://localhost:8000/app/> e o painel administrativo técnico em
 <http://localhost:8000/admin/>.
+
+## Área operacional em desenvolvimento
+
+A área `/app/` exige autenticação. Um usuário sem vínculo passa por um onboarding que
+cria, em uma única transação, sua locadora, a matriz e o vínculo de proprietário. Com
+uma única locadora, o contexto é selecionado automaticamente; com várias, o usuário
+faz uma escolha explícita. O Django Admin continua disponível apenas como ferramenta
+técnica durante a construção dos cadastros assistidos.
 
 ## Verificações
 

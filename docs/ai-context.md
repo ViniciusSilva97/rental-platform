@@ -31,12 +31,14 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 12. Produção exige PostgreSQL, segredo e hosts.
 13. IA não é fonte autoritativa de regra de negócio.
 14. Pagamentos futuros não usam integração bancária direta.
+15. O tenant operacional vem de `request.organization`, nunca de um ID livre do cliente.
+16. Sessão, vínculo e organização devem estar ativos antes de liberar o contexto.
 
 ## Próxima mudança recomendada
 
-Executar a v0.3.0 na ordem das dependências: contexto automático da locadora, cadastro
-assistido, orçamento reproduzível e reserva sem sobreposição. Não iniciar reservas antes
-de existir isolamento de tenant na camada de aplicação.
+Concluir a Issue #7 de contexto automático da locadora e, depois, executar a Issue #8
+de cadastro assistido e códigos internos. Orçamento e reserva permanecem dependentes
+dessas duas fundações.
 
 ## Como propor mudanças
 

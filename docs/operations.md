@@ -74,6 +74,18 @@ Liveness e readiness têm finalidades diferentes:
 
 O alias `/health/` evita quebrar consumidores da primeira versão.
 
+## Autenticação e área da locadora
+
+- `/accounts/login/`: autenticação do usuário interno;
+- `/app/`: entrada da área operacional;
+- `/app/onboarding/`: criação inicial da locadora e matriz;
+- `/app/selecionar-locadora/`: escolha para usuários com múltiplos vínculos;
+- `/admin/`: administração técnica, não destinada à operação normal.
+
+Ainda não há cadastro público. Crie o primeiro usuário com `createsuperuser` ou pelo
+Admin. Depois do login, o onboarding cria a locadora, a matriz e o vínculo de
+proprietário sem exigir slug ou identificador de organização.
+
 ## Qualidade e CI
 
 Execução local:
@@ -90,7 +102,8 @@ testes e valida as configurações de produção com `check --deploy`. Isso enco
 diferenças que uma suíte exclusivamente SQLite poderia esconder.
 
 Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, políticas e cálculos de
-preço, perfis patrimoniais, invariantes multi-tenant, valores monetários, estados
+preço, perfis patrimoniais, onboarding transacional, sessão adulterada, seleção de
+locadora, vínculos inativos, invariantes multi-tenant, valores monetários, estados
 iniciais e endpoints operacionais. Os fluxos inline com pai ainda não salvo também são
 exercitados. As migrations de estabelecimento e de conversão da diária legada são
 testadas sobre estados anteriores ao release.

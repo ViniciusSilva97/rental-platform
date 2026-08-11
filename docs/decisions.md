@@ -151,3 +151,22 @@ as regras determinísticas no banco.
 **Adiado:** método de depreciação, competência mensal, valor acumulado, impairment,
 revisão de estimativas e lançamentos pertencem à v0.5. O valor depreciável atual é
 somente `custo - residual`.
+
+## ADR-011 — Organização ativa derivada do usuário
+
+**Status:** aceito.
+
+**Decisão:** a área operacional resolve a locadora ativa a partir de vínculos ativos do
+usuário. O UUID escolhido fica na sessão, mas é revalidado no banco a cada request. Um
+único vínculo é automático; múltiplos exigem escolha explícita. Formulários futuros não
+receberão `organization_id` como decisão livre do cliente.
+
+**Motivo:** repetir `Organization` em todos os formulários expõe um conceito técnico,
+prejudica a experiência e permite falhas de isolamento se um identificador manipulado
+for aceito. O request autenticado deve ser a origem do escopo operacional.
+
+**Onboarding:** locadora, matriz e vínculo de proprietário são criados em uma única
+transação. Assim, uma falha no CNPJ ou na unidade não deixa um tenant incompleto.
+
+**Limites:** o Admin permanece técnico e não herda automaticamente o contexto. Não há
+cadastro público, assinatura do SaaS ou matriz detalhada de permissões nesta decisão.
