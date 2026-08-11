@@ -113,8 +113,37 @@ Representa matriz ou filial da organização.
 | `__str__()` | combina estabelecimento e organização |
 
 Constraints garantem nome único dentro da organização, formato normalizado e no máximo
-uma matriz ativa. Uma organização pode existir temporariamente sem matriz; a camada de
-onboarding deverá criar ambas em uma única transação.
+uma matriz ativa. Uma organização pode existir tecnicamente sem matriz, mas o
+onboarding operacional cria ambas em uma única transação.
+
+### Serviços de contexto e onboarding
+
+| Elemento | Contrato |
+|---|---|
+| `available_memberships(user)` | retorna somente vínculos e organizações ativos |
+| `resolve_active_organization(request)` | valida a sessão e seleciona automaticamente o único vínculo |
+| `set_active_organization(request, organization)` | grava o contexto apenas após confirmar acesso |
+| `clear_active_organization(request)` | remove da sessão um contexto inválido ou antigo |
+| `create_organization_for_owner(...)` | cria locadora, matriz e proprietário atomicamente |
+| `ACTIVE_ORGANIZATION_SESSION_KEY` | chave única usada para persistir o UUID na sessão |
+
+O slug é interno e gerado a partir do nome, recebendo sufixo quando necessário. O CNPJ
+continua pertencendo à matriz. Uma falha de validação na matriz desfaz também a
+organização e o vínculo.
+
+### Formulários, middleware e views operacionais
+
+| Elemento | Responsabilidade |
+|---|---|
+| `OrganizationOnboardingForm` | coleta nomes amigáveis e CNPJ opcional, sem expor slug ou tenant |
+| `OrganizationSelectionForm` | oferece apenas locadoras acessíveis ao usuário |
+| `ActiveOrganizationMiddleware` | disponibiliza o contexto validado em `request.organization` |
+| `workspace_home()` | exige autenticação e direciona onboarding, seleção ou painel |
+| `onboarding()` | impede duplicidade e executa a criação transacional |
+| `select_organization()` | exige escolha quando há vários vínculos e rejeita IDs externos |
+
+As rotas operacionais ficam sob `/app/`; login e logout usam as views autenticadas do
+Django em `/accounts/`. Não existe cadastro público de usuário nesta versão.
 
 ## `customers`
 

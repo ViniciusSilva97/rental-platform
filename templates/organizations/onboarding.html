@@ -1,0 +1,16 @@
+{% extends "app_base.html" %}
+
+{% block title %}Configurar locadora — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Vamos configurar sua locadora</h1>
+<p class="muted">
+    Você informa os dados principais uma vez. O sistema criará automaticamente a
+    empresa, a matriz e seu acesso como proprietário.
+</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="button" type="submit">Criar minha locadora</button>
+</form>
+{% endblock %}

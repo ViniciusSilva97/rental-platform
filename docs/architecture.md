@@ -9,7 +9,7 @@ início do produto sem impedir uma futura separação baseada em evidências.
 
 ```mermaid
 flowchart TD
-    UI["Admin e futura API"] --> APP["Django"]
+    UI["Área operacional, Admin e futura API"] --> APP["Django"]
     APP --> ACC["accounts"]
     APP --> ORG["organizations"]
     APP --> CAT["catalog"]
@@ -71,9 +71,20 @@ Invariantes já implementadas:
 - entrada em operação não antecede a aquisição;
 - vida útil patrimonial é positiva.
 
-O Django Admin atual é uma ferramenta interna de bootstrap e não representa ainda
-isolamento completo de tenant na interface. Antes de uso por clientes reais, os
-querysets e formulários deverão ser filtrados pela organização do usuário autenticado.
+### Contexto operacional ativo
+
+`ActiveOrganizationMiddleware` resolve `request.organization` somente a partir de
+`Membership` e da sessão autenticada. Um identificador adulterado, vínculo inativo ou
+organização inativa é descartado. Quando existe um único vínculo ativo, o contexto é
+selecionado automaticamente; múltiplos vínculos exigem escolha explícita.
+
+O onboarding cria `Organization`, matriz e vínculo `OWNER` dentro da mesma transação.
+Não há migration neste incremento porque o fluxo usa as tabelas existentes. A nova
+área `/app/` é a fundação operacional; os próximos formulários devem obter o tenant do
+request e filtrar todos os relacionamentos por ele.
+
+O Django Admin permanece uma ferramenta técnica de bootstrap e não aplica esse escopo
+automaticamente. Ele não deve ser oferecido como interface normal ao cliente.
 
 ## Persistência
 
@@ -100,7 +111,7 @@ devem validar seus próprios dados e continuam protegidos apenas pelas constrain
 | `0.2.0` | clientes e endereços |
 | `0.2.1` | política de preço por hora, dia e mês |
 | `0.2.2` | base patrimonial dos ativos |
-| `0.3.x` | orçamentos, reservas e disponibilidade |
+| `0.3.x` | contexto da locadora, cadastro assistido, orçamentos e reservas |
 | `0.4.x` | contratos, retirada, devolução e inspeção |
 | `0.5.x` | depreciação de ativos |
 | `0.6.x` | checkout hospedado e webhooks |

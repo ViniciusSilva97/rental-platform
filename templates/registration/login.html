@@ -1,0 +1,14 @@
+{% extends "app_base.html" %}
+
+{% block title %}Entrar — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Entrar</h1>
+<p class="muted">Use seu usuário para acessar a locadora.</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button class="button" type="submit">Entrar</button>
+</form>
+{% endblock %}

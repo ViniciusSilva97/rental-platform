@@ -1,0 +1,13 @@
+{% extends "app_base.html" %}
+
+{% block title %}Escolher locadora — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Qual locadora você quer acessar?</h1>
+<p class="muted">Você possui acesso a mais de uma empresa. Escolha o contexto desta sessão.</p>
+<form method="post" class="choices">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="button" type="submit">Continuar</button>
+</form>
+{% endblock %}
