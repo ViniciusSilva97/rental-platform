@@ -30,6 +30,9 @@ Descobertas fora do escopo devem virar uma nova Issue.
 - A organização operacional vem de `request.organization`, validada contra um vínculo
   ativo; nunca aceite o tenant enviado livremente pelo formulário ou pela URL.
 - Toda consulta operacional deve ser filtrada pela organização ativa.
+- Códigos de equipamentos são alocados por `create_tool_batch()`; nunca calcule o
+  próximo código com `count()`, `max()` ou na interface.
+- Cadastros em lote devem ser atômicos e bloquear a sequência dentro da organização.
 - Clientes podem ser pessoas físicas ou jurídicas; documentos são armazenados sem máscara.
 - Endereços de clientes e seus clientes devem pertencer à mesma organização.
 - Políticas de preço pertencem à mesma organização do modelo de ferramenta.

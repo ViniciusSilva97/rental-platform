@@ -1,0 +1,62 @@
+{% extends "app_base.html" %}
+
+{% block title %}Cadastrar ferramentas — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Cadastrar ferramentas</h1>
+<p class="muted">
+    Informe os dados comerciais uma vez. O sistema criará o modelo e todos os
+    equipamentos físicos, com códigos internos automáticos.
+</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <fieldset>
+        <legend>1. Modelo da ferramenta</legend>
+        {{ form.category.as_field_group }}
+        {{ form.new_category_name.as_field_group }}
+        {{ form.model_name.as_field_group }}
+        {{ form.brand.as_field_group }}
+        {{ form.model_number.as_field_group }}
+        {{ form.description.as_field_group }}
+        {{ form.deposit_amount.as_field_group }}
+    </fieldset>
+
+    <fieldset>
+        <legend>2. Equipamentos físicos</legend>
+        {{ form.quantity.as_field_group }}
+        {{ form.establishment.as_field_group }}
+        {{ form.serial_numbers.as_field_group }}
+    </fieldset>
+
+    <fieldset>
+        <legend>3. Preços de locação</legend>
+        <p class="muted">Opcional. Informe hora, dia, mês ou qualquer combinação.</p>
+        {{ form.effective_from.as_field_group }}
+        {{ form.hourly_rate.as_field_group }}
+        {{ form.daily_rate.as_field_group }}
+        {{ form.monthly_rate.as_field_group }}
+    </fieldset>
+
+    <fieldset>
+        <legend>4. Dados de aquisição</legend>
+        <p class="muted">
+            Opcional. Os valores são por equipamento e somente serão copiados para o
+            lote quando a confirmação estiver marcada.
+        </p>
+        {{ form.confirm_asset_data.as_field_group }}
+        {{ form.acquisition_date.as_field_group }}
+        {{ form.placed_in_service_date.as_field_group }}
+        {{ form.acquisition_cost.as_field_group }}
+        {{ form.residual_value.as_field_group }}
+        {{ form.useful_life_months.as_field_group }}
+        {{ form.supplier_name.as_field_group }}
+        {{ form.invoice_number.as_field_group }}
+    </fieldset>
+
+    <p><strong>Confirmação:</strong> o cadastro inteiro será salvo de uma vez. Se houver erro, nenhum registro parcial permanecerá.</p>
+    <button class="button" type="submit">Confirmar e criar equipamentos</button>
+</form>
+{% endblock %}

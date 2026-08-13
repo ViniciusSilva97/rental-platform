@@ -82,6 +82,11 @@ uma única locadora, o contexto é selecionado automaticamente; com várias, o u
 faz uma escolha explícita. O Django Admin continua disponível apenas como ferramenta
 técnica durante a construção dos cadastros assistidos.
 
+Em `/app/ferramentas/`, o cadastro assistido cria categoria, modelo e até 100
+equipamentos físicos em uma única operação. Códigos como `EQ-000001` são automáticos;
+preços e dados patrimoniais são etapas opcionais e claramente separadas. A operação é
+atômica: um erro não deixa modelos, equipamentos ou perfis parciais.
+
 ## Verificações
 
 ```bash
@@ -125,6 +130,6 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 
 ## Próximo incremento
 
-A versão `0.3.0` começa pelo contexto automático da locadora e pelo cadastro
-assistido de ferramentas. Orçamentos, disponibilidade e reservas serão adicionados em
-Issues dependentes, evitando construir os fluxos comerciais sobre formulários técnicos.
+A próxima etapa da versão `0.3.0` é o orçamento reproduzível. Disponibilidade e
+reservas virão depois, evitando construir compromissos de estoque antes de estabilizar
+preços e seus snapshots.
