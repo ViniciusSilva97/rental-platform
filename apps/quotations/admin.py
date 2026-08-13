@@ -23,6 +23,9 @@ class QuotationItemInline(admin.TabularInline):
     )
     can_delete = False
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Quotation)
 class QuotationAdmin(admin.ModelAdmin):

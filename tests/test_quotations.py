@@ -3,6 +3,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.urls import reverse
@@ -13,6 +14,11 @@ from apps.catalog.models import Category, ToolModel
 from apps.customers.models import Customer
 from apps.organizations.models import Membership, Organization
 from apps.pricing.models import BillingUnit, PricingPolicy
+from apps.quotations.admin import (
+    QuotationAdmin,
+    QuotationItemAdmin,
+    QuotationItemInline,
+)
 from apps.quotations.models import Quotation, QuotationItem
 from apps.quotations.services import (
     QuotationLineInput,
@@ -674,6 +680,33 @@ def test_database_protects_snapshot_enumerations_and_month_definition(changes):
 
     with pytest.raises(IntegrityError), transaction.atomic():
         QuotationItem.objects.filter(quotation=quotation).update(**changes)
+
+
+@pytest.mark.django_db
+def test_database_rejects_invalid_quotation_status():
+    organization, customer, tool_model, _ = create_domain()
+    quotation = create_quote(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+    )
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        Quotation.objects.filter(pk=quotation.pk).update(status="INVALID")
+
+
+def test_quotation_admin_disables_creation_and_deletion():
+    site = AdminSite()
+    quotation_admin = QuotationAdmin(Quotation, site)
+    item_admin = QuotationItemAdmin(QuotationItem, site)
+    item_inline = QuotationItemInline(Quotation, site)
+
+    assert not quotation_admin.has_add_permission(None)
+    assert not quotation_admin.has_delete_permission(None)
+    assert not item_admin.has_add_permission(None)
+    assert not item_admin.has_delete_permission(None)
+    assert not item_inline.has_add_permission(None)
+    assert item_inline.can_delete is False
 
 
 @pytest.mark.django_db

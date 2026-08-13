@@ -100,6 +100,12 @@ class Migration(migrations.Migration):
                         condition=models.Q(("total_amount__gte", 0)),
                         name="quotation_non_negative_total",
                     ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("status__in", ["DRAFT", "SENT", "EXPIRED", "CANCELLED"])
+                        ),
+                        name="quotation_valid_status",
+                    ),
                 ],
             },
         ),
