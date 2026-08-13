@@ -1,0 +1,80 @@
+{% extends "app_base.html" %}
+
+{% block title %}{% if quotation %}Editar{% else %}Criar{% endif %} orçamento — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>{% if quotation %}Editar {{ quotation.display_code }}{% else %}Criar orçamento{% endif %}</h1>
+<p class="muted">
+    Escolha o cliente, o período e os modelos. O sistema selecionará o preço vigente e
+    fará o cálculo usando somente regras determinísticas.
+</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <fieldset>
+        <legend>1. Cliente e período</legend>
+        {{ form.customer.as_field_group }}
+        {{ form.starts_at.as_field_group }}
+        {{ form.ends_at.as_field_group }}
+        <p class="muted">O intervalo começa no horário informado e termina antes do horário final.</p>
+    </fieldset>
+
+    <fieldset>
+        <legend>2. Ferramentas</legend>
+        <p class="muted">
+            Você pode adicionar até 20 linhas. A quantidade é o número de equipamentos
+            iguais; “Cobrar por” define como o período será convertido.
+        </p>
+        {{ formset.management_form }}
+        {{ formset.non_form_errors }}
+        {% for item_form in formset %}
+            <div class="form-row" data-item-form>
+                <h3>Item {{ forloop.counter }}</h3>
+                {{ item_form.non_field_errors }}
+                {{ item_form.tool_model.as_field_group }}
+                {{ item_form.equipment_quantity.as_field_group }}
+                {{ item_form.billing_unit.as_field_group }}
+                {% if formset.can_delete %}{{ item_form.DELETE.as_field_group }}{% endif %}
+            </div>
+        {% endfor %}
+        <template id="empty-item-form">
+            <div class="form-row" data-item-form>
+                <h3>Nova ferramenta</h3>
+                {{ formset.empty_form.non_field_errors }}
+                {{ formset.empty_form.tool_model.as_field_group }}
+                {{ formset.empty_form.equipment_quantity.as_field_group }}
+                {{ formset.empty_form.billing_unit.as_field_group }}
+                {{ formset.empty_form.DELETE.as_field_group }}
+            </div>
+        </template>
+        <button class="button secondary" id="add-item" type="button">Adicionar outra ferramenta</button>
+    </fieldset>
+
+    <p>
+        <strong>Snapshot:</strong> ao salvar, tarifa, quantidade cobrada, regra de fração
+        e total ficarão registrados no orçamento.
+    </p>
+    <button class="button" type="submit">Salvar e calcular rascunho</button>
+    {% if quotation %}<a class="button secondary" href="{% url 'quotations:detail' quotation.pk %}">Voltar</a>{% endif %}
+</form>
+
+<script>
+    (() => {
+        const button = document.querySelector("#add-item");
+        const template = document.querySelector("#empty-item-form");
+        const total = document.querySelector("#id_items-TOTAL_FORMS");
+        const maximum = Number(document.querySelector("#id_items-MAX_NUM_FORMS").value);
+        button.addEventListener("click", () => {
+            const index = Number(total.value);
+            if (index >= maximum) return;
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = template.innerHTML.replaceAll("__prefix__", String(index));
+            template.before(wrapper.firstElementChild);
+            total.value = String(index + 1);
+            if (index + 1 >= maximum) button.disabled = true;
+        });
+    })();
+</script>
+{% endblock %}

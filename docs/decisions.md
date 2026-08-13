@@ -195,3 +195,34 @@ o equipamento, mas não é numeração fiscal.
 
 **Adiado:** prefixos configuráveis, importação, QR Code e etiquetas pertencem a Issues
 futuras.
+
+## ADR-013 — Orçamento com snapshot e intervalo semiaberto
+
+**Status:** aceito.
+
+**Decisão:** o orçamento usa o intervalo `[início, fim)`, seleciona a política ativa
+vigente no início da locação e copia para cada item tarifa, quantidades, total, vigência,
+arredondamento e definição de mês. Somente rascunhos podem ser editados ou
+recalculados.
+
+**Motivo:** políticas continuam mudando, mas um valor já apresentado ao cliente precisa
+ser explicável e reproduzível. Guardar apenas uma referência à política faria uma edição
+retroativa alterar a interpretação do orçamento. O intervalo semiaberto evita cobrar
+duas vezes o instante que separa períodos consecutivos.
+
+**Conversão:** hora usa duração exata; dia representa 24 horas; mês fixo usa os dias da
+política; mês-calendário conta aniversários da data inicial e calcula a fração restante
+pelo próximo intervalo mensal. A regra da política decide se essa fração permanece
+proporcional ou sobe para a unidade inteira.
+
+**Controles:** cliente, modelo, política, orçamento e item compartilham tenant;
+quantidades são positivas; dinheiro usa `Decimal`; criação e substituição dos itens são
+atômicas; políticas são bloqueadas durante o snapshot; transições passam por serviço.
+
+**Alternativas:** calcular novamente sempre que a tela fosse aberta foi rejeitado por
+destruir histórico. Copiar somente o total foi rejeitado por não explicar como ele foi
+obtido. Reservar unidades físicas durante o orçamento foi adiado porque uma cotação não
+deve bloquear estoque antes da confirmação comercial.
+
+**Adiado:** descontos, impostos, aceite eletrônico, reserva, contrato e cobrança não
+pertencem à Issue #9.

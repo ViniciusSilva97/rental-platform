@@ -16,12 +16,14 @@ flowchart TD
     APP --> CUS["customers"]
     APP --> PRI["pricing"]
     APP --> AST["assets"]
+    APP --> QUO["quotations"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
     CUS --> DB
     PRI --> DB
     AST --> DB
+    QUO --> DB
 ```
 
 ## Módulos
@@ -34,6 +36,7 @@ flowchart TD
 | `customers` | pessoas físicas/jurídicas, contatos e endereços | reservas e contratos |
 | `pricing` | versões e cálculo elementar de preços | disponibilidade, descontos e contratos |
 | `assets` | dados patrimoniais vinculados à unidade física | depreciação e contabilidade |
+| `quotations` | períodos, itens, snapshots e estados | estoque, reservas e contratos |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
@@ -44,7 +47,9 @@ depende de `catalog`; reservas futuras serão responsáveis por relacionar os do
 `pricing` depende de `catalog` e `organizations`, pois cada política precifica um modelo
 de ferramenta dentro do mesmo tenant. `assets` também depende de `catalog` e
 `organizations`: ele complementa cada unidade física com dados patrimoniais, sem fazer
-o catálogo assumir regras contábeis.
+o catálogo assumir regras contábeis. `quotations` relaciona `customers`, `catalog`,
+`pricing` e `organizations`. Ele compõe esses domínios sem transferir cálculo de período
+para o catálogo ou disponibilidade para preços.
 
 ## Isolamento por organização
 
@@ -71,6 +76,10 @@ Invariantes já implementadas:
 - valor residual não supera o custo de aquisição;
 - entrada em operação não antecede a aquisição;
 - vida útil patrimonial é positiva.
+- cliente, itens, modelos e políticas de um orçamento compartilham a organização;
+- o fim do orçamento é posterior ao início;
+- quantidades de equipamentos e período são positivas;
+- tarifa e total do snapshot não são negativos.
 
 ### Contexto operacional ativo
 
@@ -103,6 +112,25 @@ A interface nunca recebe `organization`. Categorias e estabelecimentos são filt
 por `request.organization`; uma única unidade é selecionada automaticamente e, quando
 há filiais, a matriz é a sugestão inicial. Cada equipamento nasce como `AVAILABLE`.
 Dados comuns de aquisição só geram perfis após confirmação explícita do usuário.
+
+### Orçamento reproduzível
+
+`save_draft_quotation()` é a fronteira transacional para criar e substituir um
+rascunho. Cliente e modelos são consultados novamente dentro da organização ativa. A
+política selecionada é a versão ativa mais recente já vigente no início da locação e
+fica bloqueada durante a captura do snapshot.
+
+O intervalo usa a convenção `[início, fim)`: o instante inicial pertence à locação e o
+instante final não. Horas usam duração exata; dias equivalem a 24 horas; mês fixo divide
+pelos dias configurados; mês-calendário conta aniversários do início e transforma o
+restante em fração do próximo mês. Depois, a política decide entre arredondar a fração
+para cima ou mantê-la proporcional.
+
+`QuotationItem` guarda quantidade exata, quantidade cobrada, tarifa, total, vigência,
+arredondamento e definição de mês. Alterar uma `PricingPolicy` não reescreve snapshots.
+Somente `DRAFT` pode ser editado ou recalculado; `SENT`, `EXPIRED` e `CANCELLED`
+preservam os itens. Orçamento não escolhe `ToolUnit`, não consulta disponibilidade e
+não reserva estoque.
 
 ## Persistência
 
@@ -138,7 +166,7 @@ devem validar seus próprios dados e continuam protegidos apenas pelas constrain
 Preço é uma política versionada, não apenas três colunas soltas. A versão ativa mais
 recente já vigente substitui implicitamente a anterior. Mês-calendário e quantidade
 fixa de dias são configurações explícitas; a conversão de um período real em unidades
-será responsabilidade do fluxo de orçamento.
+é responsabilidade do fluxo de orçamento e fica registrada no snapshot.
 
 A v0.2.2 registra somente a base patrimonial necessária: aquisição, entrada em
 operação, custo, valor residual e vida útil. O valor depreciável exposto pelo domínio é

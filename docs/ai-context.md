@@ -1,7 +1,8 @@
 # Contexto compacto para IA
 
-Projeto Django 5.2 chamado Rental Platform, versão `0.2.2`. Arquitetura: monólito
-modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento.
+Projeto Django 5.2 chamado Rental Platform. Última versão publicada: `0.2.2`; versão
+`0.3.0` em desenvolvimento. Arquitetura: monólito modular, PostgreSQL em
+produção/Docker/CI e SQLite opcional no desenvolvimento.
 
 ## Fonte de verdade
 
@@ -11,6 +12,7 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 - `apps/customers`: pessoa física/jurídica, contatos e endereços.
 - `apps/pricing`: políticas versionadas e cálculo elementar de preço.
 - `apps/assets`: perfil patrimonial opcional da unidade física.
+- `apps/quotations`: orçamento, conversão do período, snapshots e estados.
 - `common`: UUID/timestamps, CPF, CNPJ, CEP e health checks.
 - `config/settings`: ambientes.
 - `docs/decisions.md`: decisões aceitas e planejadas.
@@ -36,11 +38,16 @@ modular, PostgreSQL em produção/Docker/CI e SQLite opcional no desenvolvimento
 17. Códigos `EQ-NNNNNN` são reservados por `AssetCodeSequence` dentro da transação.
 18. Lotes usam `create_tool_batch()`; nunca calcule código por contagem ou maior valor.
 19. Todo queryset da área operacional deve usar `request.organization`.
+20. Orçamento, cliente, itens, modelos e políticas compartilham a organização ativa.
+21. O intervalo de orçamento é `[início, fim)`, com fim obrigatoriamente posterior.
+22. Snapshots guardam tarifa, quantidade exata, quantidade cobrada, política e total.
+23. Somente `DRAFT` pode ser editado ou recalculado.
+24. Orçamento não reserva equipamentos; disponibilidade pertence à Issue #10.
 
 ## Próxima mudança recomendada
 
-Executar a Issue #9 de orçamento reproduzível sobre o contexto seguro e o cadastro
-assistido. Reserva permanece dependente do snapshot de preço e não deve ser antecipada.
+Executar a Issue #10 de disponibilidade e reservas sem sobreposição, consumindo um
+orçamento válido sem alterar seus snapshots históricos.
 
 ## Como propor mudanças
 
