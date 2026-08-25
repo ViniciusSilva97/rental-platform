@@ -752,6 +752,26 @@ def test_create_view_saves_multiple_snapshotted_items(client):
 
 
 @pytest.mark.django_db
+def test_item_rows_only_grow_when_requested(client):
+    organization, customer, tool_model, _ = create_domain()
+    quotation = create_quote(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+    )
+    user = create_user(organization)
+    client.force_login(user)
+
+    create_response = client.get(reverse("quotations:create"))
+    edit_response = client.get(reverse("quotations:edit", args=[quotation.pk]))
+
+    assert len(create_response.context["formset"].forms) == 1
+    assert len(edit_response.context["formset"].forms) == 1
+    assert "Item 2" not in create_response.content.decode()
+    assert "Item 2" not in edit_response.content.decode()
+
+
+@pytest.mark.django_db
 def test_forms_and_views_never_expose_another_tenant(client):
     organization_a, customer_a, tool_a, _ = create_domain("a")
     organization_b, customer_b, tool_b, _ = create_domain("b")

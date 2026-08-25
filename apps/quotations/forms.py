@@ -68,7 +68,7 @@ class QuotationItemForm(forms.Form):
 
 QuotationItemFormSet = formset_factory(
     QuotationItemForm,
-    extra=1,
+    extra=0,
     can_delete=True,
     min_num=1,
     validate_min=True,
