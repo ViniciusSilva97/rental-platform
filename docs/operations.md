@@ -82,6 +82,8 @@ O alias `/health/` evita quebrar consumidores da primeira versão.
 - `/app/selecionar-locadora/`: escolha para usuários com múltiplos vínculos;
 - `/app/ferramentas/`: equipamentos da locadora ativa;
 - `/app/ferramentas/cadastrar/`: cadastro assistido em lote;
+- `/app/orcamentos/`: lista de orçamentos da locadora ativa;
+- `/app/orcamentos/novo/`: criação assistida com um ou mais modelos;
 - `/admin/`: administração técnica, não destinada à operação normal.
 
 Ainda não há cadastro público. Crie o primeiro usuário com `createsuperuser` ou pelo
@@ -105,7 +107,8 @@ diferenças que uma suíte exclusivamente SQLite poderia esconder.
 
 Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, políticas e cálculos de
 preço, perfis patrimoniais, onboarding transacional, sessão adulterada, seleção de
-locadora, cadastro assistido, rollback de lote, concorrência de códigos, vínculos
+locadora, cadastro assistido, rollback de lote, concorrência de códigos, orçamentos,
+conversões de hora/dia/mês, snapshots, estados comerciais, vínculos
 inativos, invariantes multi-tenant, valores monetários, estados
 iniciais e endpoints operacionais. Os fluxos inline com pai ainda não salvo também são
 exercitados. As migrations de estabelecimento e de conversão da diária legada são
@@ -114,6 +117,26 @@ testadas sobre estados anteriores ao release.
 O teste concorrente de códigos exige PostgreSQL e é ignorado quando a suíte usa SQLite.
 Isso é intencional: `select_for_update()` só pode ser validado em um banco com bloqueio
 de linha real, e a CI executa obrigatoriamente com PostgreSQL 17.
+
+## Teste funcional do orçamento
+
+Antes do merge da Issue #9:
+
+1. atualize a branch e execute `python manage.py migrate`;
+2. entre em `/app/` e confirme que existe cliente ativo e ferramenta com preço;
+3. abra **Criar orçamento**;
+4. selecione cliente, início, fim, modelo, quantidade e cobrança por dia;
+5. use **Adicionar outra ferramenta** e inclua um segundo modelo, se disponível;
+6. salve e confira código, período, memória de cálculo e total;
+7. edite o rascunho e confirme que o total é recalculado;
+8. altere a política no Admin e verifique que o snapshot antigo não muda sozinho;
+9. clique em **Recalcular preços** e confirme que apenas o rascunho recebe o novo valor;
+10. marque como enviado e confirme que edição e recálculo deixam de ser permitidos;
+11. marque como expirado ou, em outro orçamento, teste cancelamento;
+12. confirme que nenhum equipamento mudou para reservado.
+
+Teste também um fim anterior ao início, uma unidade sem tarifa configurada e um preço
+com vigência futura. A interface deve recusar os três casos sem criar registros parciais.
 
 ## Recuperação e backup
 

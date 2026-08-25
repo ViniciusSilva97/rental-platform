@@ -60,12 +60,31 @@ def calculate_charge(
     if rate is None:
         raise PricingUnavailable(f"Não existe valor configurado para {normalized_unit}.")
 
-    if policy.partial_unit_rounding == PricingPolicy.PartialUnitRounding.UP:
-        billable_quantity = normalized_quantity.quantize(
-            _WHOLE_UNIT,
-            rounding=ROUND_CEILING,
-        )
-    else:
-        billable_quantity = normalized_quantity
+    billable_quantity = calculate_billable_quantity(
+        policy=policy,
+        quantity=normalized_quantity,
+    )
 
     return (rate * billable_quantity).quantize(_CENT, rounding=ROUND_HALF_UP)
+
+
+def calculate_billable_quantity(
+    *,
+    policy: PricingPolicy,
+    quantity: Decimal,
+) -> Decimal:
+    """Apply only the policy rounding rule to a positive Decimal quantity."""
+    if isinstance(quantity, float):
+        raise ValueError("Use Decimal em vez de float para quantidades financeiras.")
+
+    try:
+        normalized_quantity = Decimal(quantity)
+    except (InvalidOperation, TypeError, ValueError) as error:
+        raise ValueError("A quantidade deve ser um número decimal.") from error
+
+    if normalized_quantity <= 0:
+        raise ValueError("A quantidade deve ser maior que zero.")
+
+    if policy.partial_unit_rounding == PricingPolicy.PartialUnitRounding.UP:
+        return normalized_quantity.quantize(_WHOLE_UNIT, rounding=ROUND_CEILING)
+    return normalized_quantity

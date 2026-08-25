@@ -4,7 +4,7 @@ Base técnica de uma plataforma para gestão de aluguel de ferramentas. O projet
 Python e Django em um monólito modular, com PostgreSQL nos ambientes compartilhados e
 SQLite como alternativa de baixo atrito para desenvolvimento local.
 
-A versão `0.2.2` cobre:
+A base atual — com a `v0.3.0` em desenvolvimento — cobre:
 
 - usuários, organizações e vínculos de acesso;
 - matriz e filiais com CNPJ numérico ou alfanumérico;
@@ -16,6 +16,10 @@ A versão `0.2.2` cobre:
 - mês fixo ou calendário e cobrança de frações arredondada ou proporcional;
 - perfil patrimonial opcional por unidade física;
 - aquisição, entrada em operação, custo, valor residual e vida útil;
+- orçamentos em rascunho com múltiplos modelos de ferramenta;
+- conversão determinística do período em horas, dias ou meses;
+- snapshot de tarifa, quantidade cobrada, regra de fração e total;
+- envio, expiração e cancelamento sem alterar a memória de cálculo;
 - painel administrativo, verificações de saúde e configuração por ambiente;
 - testes automatizados e integração contínua com PostgreSQL.
 
@@ -87,6 +91,11 @@ equipamentos físicos em uma única operação. Códigos como `EQ-000001` são a
 preços e dados patrimoniais são etapas opcionais e claramente separadas. A operação é
 atômica: um erro não deixa modelos, equipamentos ou perfis parciais.
 
+Em `/app/orcamentos/`, o usuário escolhe cliente, período, ferramentas, quantidades e
+unidades de cobrança. O Django seleciona a política vigente no início da locação,
+calcula o total e guarda um snapshot reproduzível. Somente rascunhos podem ser editados
+ou recalculados; enviar, expirar ou cancelar preserva os valores já registrados.
+
 ## Verificações
 
 ```bash
@@ -130,9 +139,8 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 
 ## Próximo incremento
 
-A próxima etapa da versão `0.3.0` é o orçamento reproduzível. Disponibilidade e
-reservas virão depois, evitando construir compromissos de estoque antes de estabilizar
-preços e seus snapshots.
+A próxima etapa da versão `0.3.0` é a disponibilidade com reservas sem sobreposição.
+Ela consumirá os orçamentos reproduzíveis sem fazer um orçamento bloquear estoque.
 
 ## Licença
 

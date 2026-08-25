@@ -40,6 +40,10 @@ Descobertas fora do escopo devem virar uma nova Issue.
 - O valor residual não pode superar o custo de aquisição.
 - A entrada em operação não pode anteceder a aquisição.
 - A versão vigente é a política ativa mais recente cuja data já começou.
+- Orçamentos são criados ou recalculados somente por `save_draft_quotation()`.
+- Itens de orçamento preservam política, tarifa, quantidades e total como snapshot.
+- Somente rascunhos podem mudar; envio, expiração e cancelamento preservam os itens.
+- Um orçamento não reserva estoque nem altera o estado de `ToolUnit`.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.
 - Relacionamentos entre registros de organizações diferentes são inválidos.
 - Valores monetários usam `DecimalField`; nunca use `float`.

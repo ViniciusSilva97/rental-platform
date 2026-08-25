@@ -302,14 +302,94 @@ intervalos sobrepostos e permite agendar uma mudança futura com um novo registr
 | Função/classe | Contrato |
 |---|---|
 | `select_effective_policy(...)` | seleciona a versão ativa mais recente já vigente |
+| `calculate_billable_quantity(...)` | aplica somente a regra de fração à quantidade positiva |
 | `calculate_charge(...)` | multiplica a tarifa pela quantidade e retorna duas casas decimais |
 | `PricingUnavailable` | informa que a unidade solicitada não possui tarifa |
 
 `calculate_charge()` recebe quantidade já expressa na unidade. Com arredondamento `UP`,
 qualquer fração iniciada vira uma unidade inteira; com `PROPORTIONAL`, a fração é
-preservada. A função rejeita `float`, quantidade não positiva e unidade desconhecida.
-Converter datas reais em horas, dias ou meses pertence ao futuro caso de uso de
-orçamento, que também registrará um snapshot do cálculo.
+preservada. As funções rejeitam `float`, quantidade não positiva e unidade desconhecida.
+Converter datas reais em horas, dias ou meses pertence ao módulo de orçamentos.
+
+## `quotations`
+
+### `Quotation`
+
+Representa o cabeçalho e o ciclo de vida comercial de um orçamento.
+
+| Elemento | Comportamento |
+|---|---|
+| `organization` | tenant explícito e obrigatório |
+| `customer` | cliente protegido contra exclusão enquanto referenciado |
+| `starts_at`, `ends_at` | intervalo `[início, fim)`, com duração positiva |
+| `status` | `DRAFT`, `SENT`, `EXPIRED` ou `CANCELLED` |
+| `total_amount` | soma decimal dos snapshots dos itens |
+| `sent_at`, `expired_at`, `cancelled_at` | instante da transição correspondente |
+| `display_code` | código amigável `ORC-XXXXXXXX` derivado do UUID |
+| `clean()` | rejeita cliente de outro tenant e período inválido |
+| `save()` | executa validação do modelo antes de persistir |
+
+O código amigável não é numeração fiscal ou sequência comercial. O UUID continua sendo
+a identidade persistente. O orçamento não representa reserva e não altera equipamentos.
+
+### `QuotationItem`
+
+Cada item relaciona um modelo comercial a uma política e preserva o cálculo usado.
+
+| Campo | Snapshot preservado |
+|---|---|
+| `equipment_quantity` | número de equipamentos iguais solicitado |
+| `billing_unit` | hora, dia ou mês escolhido |
+| `period_quantity` | quantidade exata convertida a partir do intervalo |
+| `billed_quantity` | quantidade após arredondamento da política |
+| `unit_rate` | tarifa da unidade no momento do cálculo |
+| `line_total` | tarifa × quantidade cobrada × equipamentos |
+| `policy_effective_from` | início da vigência selecionada |
+| `partial_unit_rounding` | arredondamento para cima ou proporcional |
+| `month_definition`, `fixed_month_days` | definição de mês usada |
+| `calculation_summary` | memória de cálculo legível para a interface |
+
+O item repete `organization_id` para permitir escopo direto. `clean()` confirma tenant,
+modelo e política; constraints exigem quantidades positivas, valores não negativos e
+uma única linha por orçamento, modelo e unidade de cobrança.
+
+### Serviços de orçamento
+
+| Elemento | Contrato |
+|---|---|
+| `QuotationLineInput` | entrada imutável com modelo, quantidade e unidade |
+| `PeriodCalculation` | quantidade exata e quantidade efetivamente cobrada |
+| `calculate_period(...)` | converte o intervalo para hora, dia, mês fixo ou mês-calendário |
+| `save_draft_quotation(...)` | cria/substitui rascunho e snapshots em uma transação |
+| `recalculate_draft_quotation(...)` | refaz snapshots existentes somente em `DRAFT` |
+| `transition_quotation(...)` | aplica a máquina de estados e registra o horário |
+
+`save_draft_quotation()` consulta novamente cliente e modelos dentro do tenant, bloqueia
+a política escolhida e substitui os itens somente depois de calcular todas as linhas.
+Qualquer erro desfaz cabeçalho, itens e total. A seleção usa a data local do início da
+locação; políticas futuras, inativas ou sem a unidade escolhida são recusadas.
+
+Transições permitidas:
+
+- `DRAFT → SENT` ou `DRAFT → CANCELLED`;
+- `SENT → EXPIRED` ou `SENT → CANCELLED`;
+- `EXPIRED` e `CANCELLED` são terminais neste incremento.
+
+### Formulários e views operacionais
+
+| Elemento | Responsabilidade |
+|---|---|
+| `QuotationForm` | oferece somente clientes ativos da locadora e valida o período |
+| `QuotationItemForm` | oferece somente modelos ativos da locadora |
+| `QuotationItemFormSet` | aceita de 1 a 20 linhas, inclusive inclusão dinâmica na tela |
+| `quotation_list()` | lista somente orçamentos da organização ativa |
+| `quotation_create()` / `quotation_edit()` | criam ou substituem apenas rascunhos |
+| `quotation_detail()` | apresenta snapshots e memória de cálculo |
+| `quotation_recalculate()` | atualiza preços somente enquanto rascunho |
+| `quotation_transition()` | executa ações POST explícitas de estado |
+
+Todas as URLs ficam sob `/app/orcamentos/`. Nenhum formulário recebe
+`organization_id`; o tenant vem exclusivamente de `request.organization`.
 
 ## `assets`
 
@@ -348,7 +428,8 @@ versões dentro do modelo de ferramenta e também herda a organização.
 `AssetProfileInline` permite registrar o perfil patrimonial dentro da unidade física;
 seu formset preserva o pai ainda não salvo e atribui o tenant. Os métodos
 `display_cnpj()`, `display_document()` e `display_postal_code()` formatam dados sem
-mudar a persistência.
+mudar a persistência. Orçamentos e itens são somente leitura no Admin: alterações de
+período, snapshots e estados devem passar pelos serviços e telas operacionais.
 
 O Admin acelera validação do domínio, mas não é a interface final e ainda não aplica
 escopo por organização ao usuário conectado.

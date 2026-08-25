@@ -1,0 +1,64 @@
+{% extends "app_base.html" %}
+
+{% block title %}{{ quotation.display_code }} — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>{{ quotation.display_code }}</h1>
+<p><strong>Cliente:</strong> {{ quotation.customer.name }} — {{ quotation.customer.formatted_document }}</p>
+<p><strong>Período:</strong> {{ quotation.starts_at|date:"d/m/Y H:i" }} a {{ quotation.ends_at|date:"d/m/Y H:i" }}</p>
+<p><strong>Situação:</strong> {{ quotation.get_status_display }}</p>
+
+<h2>Memória de cálculo</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Ferramenta</th>
+            <th>Cálculo</th>
+            <th>Preço vigente desde</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in quotation.items.all %}
+            <tr>
+                <td>{{ item.tool_model }}</td>
+                <td>
+                    {{ item.calculation_summary }}
+                    {% if item.period_quantity != item.billed_quantity %}
+                        <span class="helptext">Período exato: {{ item.period_quantity.normalize }} {{ item.get_billing_unit_display|lower }}(s).</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.policy_effective_from|date:"d/m/Y" }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p class="quotation-total"><strong>Total: R$ {{ quotation.total_amount|floatformat:2 }}</strong></p>
+
+<div class="actions">
+    {% if quotation.status == "DRAFT" %}
+        <a class="button" href="{% url 'quotations:edit' quotation.pk %}">Editar rascunho</a>
+        <form method="post" action="{% url 'quotations:recalculate' quotation.pk %}">
+            {% csrf_token %}
+            <button class="button secondary" type="submit">Recalcular preços</button>
+        </form>
+        <form method="post" action="{% url 'quotations:transition' quotation.pk 'SENT' %}">
+            {% csrf_token %}
+            <button class="button" type="submit">Marcar como enviado</button>
+        </form>
+        <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
+            {% csrf_token %}
+            <button class="button danger" type="submit">Cancelar</button>
+        </form>
+    {% elif quotation.status == "SENT" %}
+        <form method="post" action="{% url 'quotations:transition' quotation.pk 'EXPIRED' %}">
+            {% csrf_token %}
+            <button class="button secondary" type="submit">Marcar como expirado</button>
+        </form>
+        <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
+            {% csrf_token %}
+            <button class="button danger" type="submit">Cancelar</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
