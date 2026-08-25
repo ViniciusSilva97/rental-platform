@@ -90,3 +90,7 @@ Depois, o responsável pelo produto executa o roteiro funcional. Somente então 
 pode ficar pronto para revisão e ser mesclado.
 
 Detalhes estão em `docs/development-workflow.md`.
+
+## Licenciamento das contribuições
+
+Ao enviar uma contribuição, o autor declara possuir os direitos necessários e concorda com a seção **Contribuições ao projeto** do arquivo [LICENSE](LICENSE), inclusive com a autorização concedida ao titular para uso comercial e relicenciamento da contribuição. Dependências e materiais de terceiros devem ser identificados e permanecer sob suas licenças originais.

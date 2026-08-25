@@ -141,3 +141,9 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 
 A próxima etapa da versão `0.3.0` é a disponibilidade com reservas sem sobreposição.
 Ela consumirá os orçamentos reproduzíveis sem fazer um orçamento bloquear estoque.
+
+## Licença
+
+Este projeto é disponibilizado como código-fonte disponível (*source available*) exclusivamente para uso interno. Ele não é oferecido como software *open source*. Revenda, redistribuição, exploração comercial e oferta como SaaS ou serviço gerenciado são proibidas sem autorização prévia e escrita do titular.
+
+Consulte o arquivo [LICENSE](LICENSE) para conhecer os termos completos. Componentes de terceiros permanecem sujeitos às suas próprias licenças.
