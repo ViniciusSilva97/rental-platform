@@ -1,0 +1,33 @@
+{% extends "app_base.html" %}
+
+{% block title %}{{ reservation.display_code }} — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>{{ reservation.display_code }}</h1>
+<p><strong>Orçamento:</strong> <a href="{% url 'quotations:detail' reservation.quotation.pk %}">{{ reservation.quotation.display_code }}</a></p>
+<p><strong>Cliente:</strong> {{ reservation.quotation.customer.name }}</p>
+<p><strong>Estabelecimento:</strong> {{ reservation.establishment.name }}</p>
+<p><strong>Período:</strong> {{ reservation.starts_at|date:"d/m/Y H:i" }} a {{ reservation.ends_at|date:"d/m/Y H:i" }}</p>
+<p><strong>Situação:</strong> {{ reservation.get_status_display }}</p>
+
+<h2>Equipamentos alocados</h2>
+<table>
+    <thead><tr><th>Código</th><th>Ferramenta</th><th>Estado do bloqueio</th></tr></thead>
+    <tbody>
+        {% for allocation in reservation.allocations.all %}
+            <tr>
+                <td>{{ allocation.tool_unit.asset_code }}</td>
+                <td>{{ allocation.tool_unit.tool_model }}</td>
+                <td>{% if allocation.released_at %}Liberado em {{ allocation.released_at|date:"d/m/Y H:i" }}{% else %}Período bloqueado{% endif %}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if reservation.status == "CONFIRMED" %}
+    <form method="post" action="{% url 'reservations:cancel' reservation.pk %}">
+        {% csrf_token %}
+        <button class="button danger" type="submit">Cancelar e liberar período</button>
+    </form>
+{% endif %}
+{% endblock %}

@@ -139,7 +139,9 @@ def quotation_detail(request, quotation_id):
     if response:
         return response
     quotation = get_object_or_404(
-        Quotation.objects.select_related("customer").prefetch_related("items__tool_model"),
+        Quotation.objects.select_related("customer", "reservation").prefetch_related(
+            "items__tool_model"
+        ),
         pk=quotation_id,
         organization=organization,
     )

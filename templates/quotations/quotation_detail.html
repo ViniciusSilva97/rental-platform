@@ -51,14 +51,23 @@
             <button class="button danger" type="submit">Cancelar</button>
         </form>
     {% elif quotation.status == "SENT" %}
-        <form method="post" action="{% url 'quotations:transition' quotation.pk 'EXPIRED' %}">
-            {% csrf_token %}
-            <button class="button secondary" type="submit">Marcar como expirado</button>
-        </form>
-        <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
-            {% csrf_token %}
-            <button class="button danger" type="submit">Cancelar</button>
-        </form>
+        {% if quotation.reservation and quotation.reservation.status == "CONFIRMED" %}
+            <a class="button" href="{% url 'reservations:detail' quotation.reservation.pk %}">Ver reserva</a>
+        {% else %}
+            {% if quotation.reservation %}
+                <a class="button" href="{% url 'reservations:detail' quotation.reservation.pk %}">Ver reserva cancelada</a>
+            {% else %}
+                <a class="button" href="{% url 'reservations:create' quotation.pk %}">Confirmar reserva</a>
+            {% endif %}
+            <form method="post" action="{% url 'quotations:transition' quotation.pk 'EXPIRED' %}">
+                {% csrf_token %}
+                <button class="button secondary" type="submit">Marcar como expirado</button>
+            </form>
+            <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
+                {% csrf_token %}
+                <button class="button danger" type="submit">Cancelar</button>
+            </form>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}

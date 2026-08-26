@@ -1,0 +1,38 @@
+{% extends "app_base.html" %}
+
+{% block title %}Disponibilidade — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Consultar disponibilidade</h1>
+<p class="muted">
+    O instante final não pertence à reserva. Uma reserva que termina às 10h não conflita
+    com outra que começa exatamente às 10h.
+</p>
+
+<form method="get">
+    {{ form.non_field_errors }}
+    {{ form.establishment.as_field_group }}
+    {{ form.tool_model.as_field_group }}
+    {{ form.starts_at.as_field_group }}
+    {{ form.ends_at.as_field_group }}
+    <button class="button" type="submit">Consultar</button>
+</form>
+
+{% if units is not None %}
+    <h2>Equipamentos disponíveis: {{ units|length }}</h2>
+    <table>
+        <thead><tr><th>Código</th><th>Ferramenta</th><th>Localização</th></tr></thead>
+        <tbody>
+            {% for unit in units %}
+                <tr>
+                    <td>{{ unit.asset_code }}</td>
+                    <td>{{ unit.tool_model }}</td>
+                    <td>{{ unit.location|default:"—" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">Nenhum equipamento disponível nesse período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% endblock %}

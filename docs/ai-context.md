@@ -13,6 +13,7 @@ produção/Docker/CI e SQLite opcional no desenvolvimento.
 - `apps/pricing`: políticas versionadas e cálculo elementar de preço.
 - `apps/assets`: perfil patrimonial opcional da unidade física.
 - `apps/quotations`: orçamento, conversão do período, snapshots e estados.
+- `apps/reservations`: disponibilidade, confirmação, alocações físicas e cancelamento.
 - `common`: UUID/timestamps, CPF, CNPJ, CEP e health checks.
 - `config/settings`: ambientes.
 - `docs/decisions.md`: decisões aceitas e planejadas.
@@ -42,12 +43,18 @@ produção/Docker/CI e SQLite opcional no desenvolvimento.
 21. O intervalo de orçamento é `[início, fim)`, com fim obrigatoriamente posterior.
 22. Snapshots guardam tarifa, quantidade exata, quantidade cobrada, política e total.
 23. Somente `DRAFT` pode ser editado ou recalculado.
-24. Orçamento não reserva equipamentos; disponibilidade pertence à Issue #10.
+24. Orçamento não reserva equipamentos nem altera o estado físico da unidade.
+25. Somente orçamento `SENT` gera uma reserva e cada orçamento gera no máximo uma.
+26. Reserva e alocações copiam o intervalo `[início, fim)` do orçamento.
+27. Alocações ativas da mesma unidade não podem se sobrepor no PostgreSQL.
+28. Cancelar libera alocações sem apagar o histórico.
+29. `ToolUnit.status` representa condição operacional; agenda é derivada das alocações.
+30. Reserva confirmada deve ser cancelada antes de expirar ou cancelar o orçamento.
 
 ## Próxima mudança recomendada
 
-Executar a Issue #10 de disponibilidade e reservas sem sobreposição, consumindo um
-orçamento válido sem alterar seus snapshots históricos.
+Estabilizar e publicar a `v0.3.0`; depois evoluir reservas confirmadas para contratos,
+retirada, devolução e inspeção sem alterar snapshots históricos.
 
 ## Como propor mudanças
 

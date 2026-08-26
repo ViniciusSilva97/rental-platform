@@ -15,6 +15,7 @@ referência de manutenção e contexto confiável para ferramentas de IA.
 | [versions/v0.2.0.md](versions/v0.2.0.md) | clientes, endereços e auditoria do incremento |
 | [versions/v0.2.1.md](versions/v0.2.1.md) | preços versionados e migração da diária legada |
 | [versions/v0.2.2.md](versions/v0.2.2.md) | base patrimonial por unidade física |
+| [versions/v0.3.0.md](versions/v0.3.0.md) | contexto, cadastro, orçamento e reservas |
 | [ai-context.md](ai-context.md) | contexto compacto e regras para assistência por IA |
 
 ## Política de documentação por versão

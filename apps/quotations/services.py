@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -319,9 +319,13 @@ def recalculate_draft_quotation(*, organization, quotation: Quotation) -> Quotat
 @transaction.atomic
 def transition_quotation(*, organization, quotation: Quotation, target_status: str) -> Quotation:
     try:
-        scoped_quotation = Quotation.objects.select_for_update().get(
-            pk=quotation.pk,
-            organization=organization,
+        scoped_quotation = (
+            Quotation.objects.select_for_update()
+            .select_related("reservation")
+            .get(
+                pk=quotation.pk,
+                organization=organization,
+            )
         )
     except Quotation.DoesNotExist as error:
         raise ValidationError("O orçamento não pertence à locadora ativa.") from error
@@ -343,6 +347,16 @@ def transition_quotation(*, organization, quotation: Quotation, target_status: s
             f"{scoped_quotation.get_status_display()} para "
             f"{target_label}."
         )
+
+    if scoped_quotation.status == Quotation.Status.SENT:
+        try:
+            reservation = scoped_quotation.reservation
+        except ObjectDoesNotExist:
+            reservation = None
+        if reservation is not None and reservation.cancelled_at is None:
+            raise ValidationError(
+                "Cancele primeiro a reserva confirmada antes de encerrar o orçamento."
+            )
 
     now = timezone.now()
     scoped_quotation.status = target_status

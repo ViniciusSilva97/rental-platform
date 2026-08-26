@@ -17,6 +17,7 @@ flowchart TD
     APP --> PRI["pricing"]
     APP --> AST["assets"]
     APP --> QUO["quotations"]
+    APP --> RES["reservations"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
@@ -24,6 +25,7 @@ flowchart TD
     PRI --> DB
     AST --> DB
     QUO --> DB
+    RES --> DB
 ```
 
 ## Módulos
@@ -37,6 +39,7 @@ flowchart TD
 | `pricing` | versões e cálculo elementar de preços | disponibilidade, descontos e contratos |
 | `assets` | dados patrimoniais vinculados à unidade física | depreciação e contabilidade |
 | `quotations` | períodos, itens, snapshots e estados | estoque, reservas e contratos |
+| `reservations` | disponibilidade temporal e alocação física | contratos, retirada e devolução |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
@@ -50,6 +53,8 @@ de ferramenta dentro do mesmo tenant. `assets` também depende de `catalog` e
 o catálogo assumir regras contábeis. `quotations` relaciona `customers`, `catalog`,
 `pricing` e `organizations`. Ele compõe esses domínios sem transferir cálculo de período
 para o catálogo ou disponibilidade para preços.
+`reservations` consome orçamentos enviados e relaciona suas linhas a unidades físicas
+de um estabelecimento. Ele não recalcula preços e não transforma reserva em contrato.
 
 ## Isolamento por organização
 
@@ -80,6 +85,11 @@ Invariantes já implementadas:
 - o fim do orçamento é posterior ao início;
 - quantidades de equipamentos e período são positivas;
 - tarifa e total do snapshot não são negativos.
+- cada orçamento possui no máximo uma reserva;
+- reserva, orçamento, estabelecimento, item e equipamento compartilham tenant;
+- o período da alocação é o mesmo da reserva e do orçamento;
+- uma unidade não possui alocações ativas sobrepostas no PostgreSQL;
+- alocações canceladas permanecem registradas e deixam de bloquear disponibilidade.
 
 ### Contexto operacional ativo
 
@@ -131,6 +141,30 @@ arredondamento e definição de mês. Alterar uma `PricingPolicy` não reescreve
 Somente `DRAFT` pode ser editado ou recalculado; `SENT`, `EXPIRED` e `CANCELLED`
 preservam os itens. Orçamento não escolhe `ToolUnit`, não consulta disponibilidade e
 não reserva estoque.
+
+### Disponibilidade e reserva
+
+`available_units()` combina a condição operacional de `ToolUnit` com a agenda de
+`ReservationAllocation`. Somente unidades `AVAILABLE` do estabelecimento e modelo
+solicitados são candidatas. Existe conflito quando uma alocação ativa satisfaz
+`existente.início < novo.fim` e `existente.fim > novo.início`; por isso intervalos que
+apenas encostam podem compartilhar a mesma unidade.
+
+`confirm_reservation()` aceita somente orçamento `SENT`, bloqueia orçamento,
+estabelecimento e unidades candidatas, seleciona equipamentos específicos e grava
+reserva e alocações na mesma transação. O PostgreSQL usa `btree_gist` e uma constraint
+de exclusão sobre `tool_unit_id` e `TSTZRANGE(..., '[)')` como defesa definitiva contra
+duas confirmações simultâneas. Em SQLite essa constraint não existe; o ambiente local
+serve para comportamento funcional, enquanto a CI PostgreSQL valida concorrência real.
+
+`cancel_reservation()` é a única transição atual: `CONFIRMED → CANCELLED`. Ela registra
+um único instante em reserva e alocações. `released_at` retira a alocação da condição da
+constraint e libera o período sem apagar qual equipamento havia sido separado. O estado
+de `ToolUnit` não muda, pois ele representa condição operacional, não agenda futura.
+
+Enquanto existir reserva confirmada, o orçamento não pode ser expirado ou cancelado.
+Primeiro a reserva deve liberar suas alocações; os snapshots comerciais permanecem
+inalterados em todos os casos.
 
 ## Persistência
 
