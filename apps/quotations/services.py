@@ -321,7 +321,6 @@ def transition_quotation(*, organization, quotation: Quotation, target_status: s
     try:
         scoped_quotation = (
             Quotation.objects.select_for_update()
-            .select_related("reservation")
             .get(
                 pk=quotation.pk,
                 organization=organization,
