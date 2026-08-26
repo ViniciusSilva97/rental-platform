@@ -347,6 +347,19 @@ def transition_quotation(*, organization, quotation: Quotation, target_status: s
             f"{target_label}."
         )
 
+    if target_status == Quotation.Status.SENT:
+        from apps.reservations.services import available_establishments_for_quotation
+
+        establishments = available_establishments_for_quotation(
+            organization=organization,
+            quotation=scoped_quotation,
+        )
+        if not establishments.exists():
+            raise ValidationError(
+                "Não é possível enviar este orçamento: nenhum estabelecimento ativo "
+                "possui todos os equipamentos solicitados disponíveis nesse período."
+            )
+
     if scoped_quotation.status == Quotation.Status.SENT:
         try:
             reservation = scoped_quotation.reservation

@@ -19,7 +19,8 @@ A base atual — com a `v0.3.0` em desenvolvimento — cobre:
 - orçamentos em rascunho com múltiplos modelos de ferramenta;
 - conversão determinística do período em horas, dias ou meses;
 - snapshot de tarifa, quantidade cobrada, regra de fração e total;
-- envio, expiração e cancelamento sem alterar a memória de cálculo;
+- envio condicionado à disponibilidade integral em pelo menos um estabelecimento;
+- expiração e cancelamento sem alterar a memória de cálculo;
 - consulta de disponibilidade por estabelecimento, modelo e período;
 - reservas confirmadas com equipamentos físicos específicos;
 - prevenção de sobreposição, concorrência e acesso entre locadoras;
@@ -98,7 +99,8 @@ atômica: um erro não deixa modelos, equipamentos ou perfis parciais.
 Em `/app/orcamentos/`, o usuário escolhe cliente, período, ferramentas, quantidades e
 unidades de cobrança. O Django seleciona a política vigente no início da locação,
 calcula o total e guarda um snapshot reproduzível. Somente rascunhos podem ser editados
-ou recalculados; enviar, expirar ou cancelar preserva os valores já registrados.
+ou recalculados. O envio exige que uma unidade ativa consiga atender integralmente as
+quantidades no período; expirar ou cancelar preserva os valores já registrados.
 
 Em `/app/reservas/`, a locadora consulta disponibilidade e confirma um orçamento
 enviado em um estabelecimento. O sistema escolhe unidades físicas específicas e

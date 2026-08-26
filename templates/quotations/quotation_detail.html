@@ -35,6 +35,13 @@
 
 <p class="quotation-total"><strong>Total: R$ {{ quotation.total_amount|floatformat:2 }}</strong></p>
 
+{% if quotation.status == "DRAFT" %}
+    <p class="muted">
+        O envio será permitido somente se um estabelecimento ativo puder atender todo o
+        orçamento no período informado.
+    </p>
+{% endif %}
+
 <div class="actions">
     {% if quotation.status == "DRAFT" %}
         <a class="button" href="{% url 'quotations:edit' quotation.pk %}">Editar rascunho</a>
@@ -44,7 +51,7 @@
         </form>
         <form method="post" action="{% url 'quotations:transition' quotation.pk 'SENT' %}">
             {% csrf_token %}
-            <button class="button" type="submit">Marcar como enviado</button>
+            <button class="button" type="submit">Validar disponibilidade e enviar</button>
         </form>
         <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
             {% csrf_token %}

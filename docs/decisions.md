@@ -256,5 +256,11 @@ reserva não sobreposta.
 orçamento. A reserva deve ser cancelada primeiro, evitando documento terminal com
 estoque ainda comprometido.
 
+Antes da transição de rascunho para enviado, o sistema exige que ao menos um
+estabelecimento ativo possua, sozinho, disponibilidade para todos os modelos e
+quantidades do orçamento. Essa consulta evita apresentar uma oferta sabidamente
+inviável, mas não bloqueia estoque: a garantia concorrente continua acontecendo apenas
+na confirmação da reserva. As filiais elegíveis são as únicas oferecidas nessa etapa.
+
 **Adiado:** múltiplos estabelecimentos na mesma reserva, escolha manual da unidade,
 lista de espera, expiração automática, contrato, retirada, devolução e manutenção.

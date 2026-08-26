@@ -139,8 +139,9 @@ para cima ou mantê-la proporcional.
 `QuotationItem` guarda quantidade exata, quantidade cobrada, tarifa, total, vigência,
 arredondamento e definição de mês. Alterar uma `PricingPolicy` não reescreve snapshots.
 Somente `DRAFT` pode ser editado ou recalculado; `SENT`, `EXPIRED` e `CANCELLED`
-preservam os itens. Orçamento não escolhe `ToolUnit`, não consulta disponibilidade e
-não reserva estoque.
+preservam os itens. Orçamento não escolhe `ToolUnit` nem reserva estoque. A transição
+para `SENT`, porém, consulta a disponibilidade corrente e exige que ao menos um
+estabelecimento ativo possa atender todas as linhas.
 
 ### Disponibilidade e reserva
 
@@ -149,6 +150,11 @@ não reserva estoque.
 solicitados são candidatas. Existe conflito quando uma alocação ativa satisfaz
 `existente.início < novo.fim` e `existente.fim > novo.início`; por isso intervalos que
 apenas encostam podem compartilhar a mesma unidade.
+
+`available_establishments_for_quotation()` soma quantidades do mesmo modelo e retorna
+somente estabelecimentos capazes de atender o orçamento completo. Ela protege o envio
+de uma oferta sabidamente inviável e restringe as opções da confirmação, mas não cria
+alocações; a disponibilidade ainda pode mudar até `confirm_reservation()`.
 
 `confirm_reservation()` aceita somente orçamento `SENT`, bloqueia orçamento,
 estabelecimento e unidades candidatas, seleciona equipamentos específicos e grava

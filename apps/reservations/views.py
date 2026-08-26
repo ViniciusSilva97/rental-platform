@@ -82,6 +82,7 @@ def reservation_create(request, quotation_id):
     form = ReservationConfirmationForm(
         request.POST or None,
         organization=organization,
+        quotation=quotation,
     )
     if request.method == "POST" and form.is_valid():
         try:

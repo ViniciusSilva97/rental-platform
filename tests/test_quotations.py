@@ -10,9 +10,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.catalog.models import Category, ToolModel
+from apps.catalog.models import Category, ToolModel, ToolUnit
 from apps.customers.models import Customer
-from apps.organizations.models import Membership, Organization
+from apps.organizations.models import Establishment, Membership, Organization
 from apps.pricing.models import BillingUnit, PricingPolicy
 from apps.quotations.admin import (
     QuotationAdmin,
@@ -37,6 +37,11 @@ def create_domain(suffix="a", **policy_values):
     organization = Organization.objects.create(
         name=f"Locadora {suffix.upper()}",
         slug=f"locadora-{suffix}",
+    )
+    establishment = Establishment.objects.create(
+        organization=organization,
+        name=f"Matriz {suffix.upper()}",
+        kind=Establishment.Kind.HEADQUARTERS,
     )
     customer = Customer.objects.create(
         organization=organization,
@@ -63,6 +68,13 @@ def create_domain(suffix="a", **policy_values):
         tool_model=tool_model,
         **defaults,
     )
+    for index in range(1, 3):
+        ToolUnit.objects.create(
+            organization=organization,
+            establishment=establishment,
+            tool_model=tool_model,
+            asset_code=f"EQ-{suffix.upper()}-{index:03d}",
+        )
     return organization, customer, tool_model, policy
 
 

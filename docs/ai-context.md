@@ -44,12 +44,13 @@ produção/Docker/CI e SQLite opcional no desenvolvimento.
 22. Snapshots guardam tarifa, quantidade exata, quantidade cobrada, política e total.
 23. Somente `DRAFT` pode ser editado ou recalculado.
 24. Orçamento não reserva equipamentos nem altera o estado físico da unidade.
-25. Somente orçamento `SENT` gera uma reserva e cada orçamento gera no máximo uma.
-26. Reserva e alocações copiam o intervalo `[início, fim)` do orçamento.
-27. Alocações ativas da mesma unidade não podem se sobrepor no PostgreSQL.
-28. Cancelar libera alocações sem apagar o histórico.
-29. `ToolUnit.status` representa condição operacional; agenda é derivada das alocações.
-30. Reserva confirmada deve ser cancelada antes de expirar ou cancelar o orçamento.
+25. `DRAFT → SENT` exige disponibilidade integral em um único estabelecimento ativo.
+26. Somente orçamento `SENT` gera uma reserva e cada orçamento gera no máximo uma.
+27. Reserva e alocações copiam o intervalo `[início, fim)` do orçamento.
+28. Alocações ativas da mesma unidade não podem se sobrepor no PostgreSQL.
+29. Cancelar libera alocações sem apagar o histórico.
+30. `ToolUnit.status` representa condição operacional; agenda é derivada das alocações.
+31. Reserva confirmada deve ser cancelada antes de expirar ou cancelar o orçamento.
 
 ## Próxima mudança recomendada
 

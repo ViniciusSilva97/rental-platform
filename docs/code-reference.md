@@ -362,7 +362,7 @@ uma única linha por orçamento, modelo e unidade de cobrança.
 | `calculate_period(...)` | converte o intervalo para hora, dia, mês fixo ou mês-calendário |
 | `save_draft_quotation(...)` | cria/substitui rascunho e snapshots em uma transação |
 | `recalculate_draft_quotation(...)` | refaz snapshots existentes somente em `DRAFT` |
-| `transition_quotation(...)` | aplica a máquina de estados e registra o horário |
+| `transition_quotation(...)` | valida disponibilidade no envio, aplica o estado e registra o horário |
 
 `save_draft_quotation()` consulta novamente cliente e modelos dentro do tenant, bloqueia
 a política escolhida e substitui os itens somente depois de calcular todas as linhas.
@@ -374,6 +374,10 @@ Transições permitidas:
 - `DRAFT → SENT` ou `DRAFT → CANCELLED`;
 - `SENT → EXPIRED` ou `SENT → CANCELLED`;
 - `EXPIRED` e `CANCELLED` são terminais neste incremento.
+
+`DRAFT → SENT` só ocorre quando um estabelecimento ativo pode atender, sozinho, todas
+as quantidades no período. Essa validação consulta a agenda, mas não bloqueia unidades;
+a alocação concorrente definitiva pertence à confirmação da reserva.
 
 ### Formulários e views operacionais
 
@@ -435,6 +439,7 @@ unidade usando GiST e `TSTZRANGE(..., '[)')`; a condição ignora alocações li
 |---|---|
 | `ReservationUnavailable` | conflito ou quantidade insuficiente com mensagem operacional |
 | `available_units(...)` | filtra tenant, estabelecimento, modelo, estado e sobreposição |
+| `available_establishments_for_quotation(...)` | encontra filiais que atendem o orçamento completo |
 | `confirm_reservation(...)` | bloqueia, seleciona unidades e grava tudo atomicamente |
 | `cancel_reservation(...)` | aplica `CONFIRMED → CANCELLED` e libera alocações |
 

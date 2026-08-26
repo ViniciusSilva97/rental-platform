@@ -53,6 +53,48 @@ def available_units(*, organization, establishment, tool_model, starts_at, ends_
     )
 
 
+def available_establishments_for_quotation(*, organization, quotation):
+    _validate_period(quotation.starts_at, quotation.ends_at)
+    if not organization.active:
+        raise ValidationError("A organização atual precisa estar ativa.")
+    if quotation.organization_id != organization.id:
+        raise ValidationError("O orçamento deve pertencer à organização atual.")
+
+    requirements = {}
+    for item in quotation.items.select_related("tool_model"):
+        if not item.tool_model.active:
+            return Establishment.objects.none()
+        requirement = requirements.setdefault(
+            item.tool_model_id,
+            {"tool_model": item.tool_model, "quantity": 0},
+        )
+        requirement["quantity"] += item.equipment_quantity
+
+    establishments = Establishment.objects.filter(
+        organization=organization,
+        active=True,
+    )
+    if not requirements:
+        return establishments.none()
+
+    available_establishment_ids = []
+    for establishment in establishments:
+        if all(
+            available_units(
+                organization=organization,
+                establishment=establishment,
+                tool_model=requirement["tool_model"],
+                starts_at=quotation.starts_at,
+                ends_at=quotation.ends_at,
+            ).count()
+            >= requirement["quantity"]
+            for requirement in requirements.values()
+        ):
+            available_establishment_ids.append(establishment.pk)
+
+    return establishments.filter(pk__in=available_establishment_ids)
+
+
 def _locked_available_units(*, organization, establishment, tool_model, starts_at, ends_at):
     units = available_units(
         organization=organization,

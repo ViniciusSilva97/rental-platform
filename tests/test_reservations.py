@@ -28,6 +28,7 @@ from apps.reservations.admin import (
 from apps.reservations.models import Reservation, ReservationAllocation
 from apps.reservations.services import (
     ReservationUnavailable,
+    available_establishments_for_quotation,
     available_units,
     cancel_reservation,
     confirm_reservation,
@@ -193,13 +194,15 @@ def test_confirm_reservation_allocates_specific_units_and_preserves_quotation():
 
 @pytest.mark.django_db
 def test_confirmation_rolls_back_when_quantity_is_unavailable():
-    organization, establishment, customer, tool_model, _ = create_domain(unit_count=1)
+    organization, establishment, customer, tool_model, units = create_domain(unit_count=2)
     quotation = create_sent_quotation(
         organization=organization,
         customer=customer,
         tool_model=tool_model,
         quantity=2,
     )
+    units[1].status = ToolUnit.Status.MAINTENANCE
+    units[1].save(update_fields=["status", "updated_at"])
 
     with pytest.raises(ReservationUnavailable, match="Não há 2 equipamento"):
         confirm_reservation(
@@ -210,6 +213,132 @@ def test_confirmation_rolls_back_when_quantity_is_unavailable():
 
     assert not Reservation.objects.exists()
     assert not ReservationAllocation.objects.exists()
+
+
+@pytest.mark.django_db
+def test_sending_requires_one_establishment_with_the_complete_availability():
+    organization, establishment, customer, tool_model, units = create_domain(unit_count=2)
+    branch = Establishment.objects.create(
+        organization=organization,
+        name="Filial",
+        kind=Establishment.Kind.BRANCH,
+    )
+    units[1].establishment = branch
+    units[1].save(update_fields=["establishment", "updated_at"])
+    quotation = save_draft_quotation(
+        organization=organization,
+        customer=customer,
+        starts_at=aware(2026, 9, 1, 8),
+        ends_at=aware(2026, 9, 3, 8),
+        lines=(QuotationLineInput(tool_model, 2, BillingUnit.DAY),),
+    )
+
+    assert not available_establishments_for_quotation(
+        organization=organization,
+        quotation=quotation,
+    ).exists()
+    with pytest.raises(ValidationError, match="Não é possível enviar este orçamento"):
+        transition_quotation(
+            organization=organization,
+            quotation=quotation,
+            target_status=Quotation.Status.SENT,
+        )
+
+    quotation.refresh_from_db()
+    assert quotation.status == Quotation.Status.DRAFT
+    assert quotation.sent_at is None
+
+
+@pytest.mark.django_db
+def test_sending_considers_active_reservations_and_allows_adjacent_periods():
+    organization, establishment, customer, tool_model, _ = create_domain(unit_count=1)
+    reserved = create_sent_quotation(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+        starts_at=aware(2026, 9, 1, 8),
+        ends_at=aware(2026, 9, 1, 10),
+    )
+    confirm_reservation(
+        organization=organization,
+        quotation=reserved,
+        establishment=establishment,
+    )
+    overlapping = save_draft_quotation(
+        organization=organization,
+        customer=customer,
+        starts_at=aware(2026, 9, 1, 9),
+        ends_at=aware(2026, 9, 1, 11),
+        lines=(QuotationLineInput(tool_model, 1, BillingUnit.DAY),),
+    )
+    adjacent = save_draft_quotation(
+        organization=organization,
+        customer=customer,
+        starts_at=aware(2026, 9, 1, 10),
+        ends_at=aware(2026, 9, 1, 12),
+        lines=(QuotationLineInput(tool_model, 1, BillingUnit.DAY),),
+    )
+
+    with pytest.raises(ValidationError, match="Não é possível enviar este orçamento"):
+        transition_quotation(
+            organization=organization,
+            quotation=overlapping,
+            target_status=Quotation.Status.SENT,
+        )
+    sent = transition_quotation(
+        organization=organization,
+        quotation=adjacent,
+        target_status=Quotation.Status.SENT,
+    )
+
+    assert sent.status == Quotation.Status.SENT
+
+
+@pytest.mark.django_db
+def test_confirmation_form_lists_only_establishments_that_can_fulfill_quote(client):
+    organization, establishment, customer, tool_model, _ = create_domain(unit_count=1)
+    unavailable_branch = Establishment.objects.create(
+        organization=organization,
+        name="Filial sem estoque",
+        kind=Establishment.Kind.BRANCH,
+    )
+    quotation = create_sent_quotation(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+    )
+    client.force_login(create_user(organization))
+
+    response = client.get(reverse("reservations:create", args=[quotation.pk]))
+
+    assert response.status_code == 200
+    choices = response.context["form"].fields["establishment"].queryset
+    assert list(choices) == [establishment]
+    assert unavailable_branch not in choices
+
+
+@pytest.mark.django_db
+def test_transition_view_keeps_unavailable_quotation_as_draft(client):
+    organization, _, customer, tool_model, _ = create_domain(unit_count=1)
+    quotation = save_draft_quotation(
+        organization=organization,
+        customer=customer,
+        starts_at=aware(2026, 9, 1, 8),
+        ends_at=aware(2026, 9, 3, 8),
+        lines=(QuotationLineInput(tool_model, 2, BillingUnit.DAY),),
+    )
+    client.force_login(create_user(organization))
+
+    response = client.post(
+        reverse("quotations:transition", args=[quotation.pk, Quotation.Status.SENT]),
+        follow=True,
+    )
+
+    quotation.refresh_from_db()
+    assert response.status_code == 200
+    assert "Não é possível enviar este orçamento" in response.content.decode()
+    assert quotation.status == Quotation.Status.DRAFT
+    assert quotation.sent_at is None
 
 
 @pytest.mark.django_db

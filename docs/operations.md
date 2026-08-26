@@ -150,20 +150,24 @@ com vigência futura. A interface deve recusar os três casos sem criar registro
 Antes do merge da Issue #10:
 
 1. atualize a branch, reconstrua os contêineres e execute `python manage.py migrate`;
-2. confirme que existe um orçamento `SENT` e equipamentos `AVAILABLE` na mesma filial;
-3. abra **Reservas → Consultar disponibilidade** e pesquise modelo, filial e período;
-4. confira que os códigos físicos disponíveis aparecem, não apenas uma quantidade;
-5. abra o orçamento enviado e clique em **Confirmar reserva**;
-6. escolha o estabelecimento e confirme que a reserva mostra unidades específicas;
-7. tente confirmar outro orçamento sobreposto com quantidade superior ao saldo e
+2. crie um orçamento sem quantidade disponível e confirme que ele permanece em
+   rascunho ao tentar marcá-lo como enviado;
+3. confirme que existe um orçamento viável e equipamentos `AVAILABLE` na mesma filial;
+4. marque o orçamento como enviado;
+5. abra **Reservas → Consultar disponibilidade** e pesquise modelo, filial e período;
+6. confira que os códigos físicos disponíveis aparecem, não apenas uma quantidade;
+7. abra o orçamento enviado e clique em **Confirmar reserva**;
+8. confirme que somente filiais capazes de atender todo o orçamento são oferecidas;
+9. escolha o estabelecimento e confirme que a reserva mostra unidades específicas;
+10. tente confirmar outro orçamento sobreposto com quantidade superior ao saldo e
    confirme que a operação é recusada sem criar reserva parcial;
-8. use um período que começa exatamente quando a primeira reserva termina e confirme
+11. use um período que começa exatamente quando a primeira reserva termina e confirme
    que a unidade volta a ser elegível;
-9. tente expirar ou cancelar o orçamento reservado e confirme a orientação para
+12. tente expirar ou cancelar o orçamento reservado e confirme a orientação para
    cancelar primeiro a reserva;
-10. cancele a reserva e confirme que as alocações aparecem como liberadas;
-11. consulte novamente o mesmo período e confirme que os equipamentos voltaram;
-12. depois do cancelamento da reserva, encerre o orçamento normalmente.
+13. cancele a reserva e confirme que as alocações aparecem como liberadas;
+14. consulte novamente o mesmo período e confirme que os equipamentos voltaram;
+15. depois do cancelamento da reserva, encerre o orçamento normalmente.
 
 Teste também uma ferramenta em manutenção e uma filial diferente. A primeira não pode
 aparecer como disponível; a segunda não pode acessar equipamentos de outra filial ou

@@ -3,6 +3,8 @@ from django import forms
 from apps.catalog.models import ToolModel
 from apps.organizations.models import Establishment
 
+from .services import available_establishments_for_quotation
+
 
 class AvailabilityForm(forms.Form):
     establishment = forms.ModelChoiceField(
@@ -54,12 +56,18 @@ class ReservationConfirmationForm(forms.Form):
         help_text="Todos os equipamentos deste orçamento serão separados nesta unidade.",
     )
 
-    def __init__(self, *args, organization, **kwargs):
+    def __init__(self, *args, organization, quotation=None, **kwargs):
         super().__init__(*args, **kwargs)
-        establishments = Establishment.objects.filter(
-            organization=organization,
-            active=True,
-        )
+        if quotation is None:
+            establishments = Establishment.objects.filter(
+                organization=organization,
+                active=True,
+            )
+        else:
+            establishments = available_establishments_for_quotation(
+                organization=organization,
+                quotation=quotation,
+            )
         self.fields["establishment"].queryset = establishments
         if establishments.count() == 1:
             self.fields["establishment"].initial = establishments.first()
