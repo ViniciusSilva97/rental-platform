@@ -239,7 +239,9 @@ mantido.
 | `__str__()` | combina código patrimonial e modelo |
 
 Estados existentes: `AVAILABLE`, `RESERVED`, `RENTED`, `INSPECTION`, `MAINTENANCE`,
-`DAMAGED` e `INACTIVE`. A enumeração limita valores, mas ainda não controla transições.
+`DAMAGED` e `INACTIVE`. `AVAILABLE` recebe o rótulo **Apta para locação** porque indica
+condição operacional; não garante ausência de reserva no período. A enumeração limita
+valores, mas ainda não controla transições.
 Quando locações forem implementadas, mudanças de estado deverão passar por um serviço
 transacional com regras explícitas e histórico.
 
@@ -264,7 +266,7 @@ organização antes de tocar a sequência; por isso `max(asset_code) + 1` e
 |---|---|
 | `AssistedToolRegistrationForm` | filtra relacionamentos pelo tenant e organiza as quatro etapas |
 | `assisted_registration()` | usa somente `request.organization` e reporta rollback/conflitos |
-| `equipment_list()` | lista exclusivamente equipamentos da locadora ativa |
+| `equipment_list()` | lista equipamentos do tenant e compõe condição com agenda atual/futura |
 
 As etapas visuais são modelo, equipamentos, preços e aquisição. Preço e perfil
 patrimonial são opcionais. A confirmação patrimonial é obrigatória antes de copiar
@@ -362,7 +364,7 @@ uma única linha por orçamento, modelo e unidade de cobrança.
 | `calculate_period(...)` | converte o intervalo para hora, dia, mês fixo ou mês-calendário |
 | `save_draft_quotation(...)` | cria/substitui rascunho e snapshots em uma transação |
 | `recalculate_draft_quotation(...)` | refaz snapshots existentes somente em `DRAFT` |
-| `transition_quotation(...)` | aplica a máquina de estados e registra o horário |
+| `transition_quotation(...)` | valida disponibilidade no envio, aplica o estado e registra o horário |
 
 `save_draft_quotation()` consulta novamente cliente e modelos dentro do tenant, bloqueia
 a política escolhida e substitui os itens somente depois de calcular todas as linhas.
@@ -374,6 +376,10 @@ Transições permitidas:
 - `DRAFT → SENT` ou `DRAFT → CANCELLED`;
 - `SENT → EXPIRED` ou `SENT → CANCELLED`;
 - `EXPIRED` e `CANCELLED` são terminais neste incremento.
+
+`DRAFT → SENT` só ocorre quando um estabelecimento ativo pode atender, sozinho, todas
+as quantidades no período. Essa validação consulta a agenda, mas não bloqueia unidades;
+a alocação concorrente definitiva pertence à confirmação da reserva.
 
 ### Formulários e views operacionais
 
@@ -390,6 +396,75 @@ Transições permitidas:
 
 Todas as URLs ficam sob `/app/orcamentos/`. Nenhum formulário recebe
 `organization_id`; o tenant vem exclusivamente de `request.organization`.
+
+## `reservations`
+
+### `Reservation`
+
+Representa o compromisso temporal confirmado a partir de um orçamento enviado.
+
+| Elemento | Comportamento |
+|---|---|
+| `organization` | tenant explícito da reserva |
+| `quotation` | relação um para um; um orçamento não gera duas reservas |
+| `establishment` | unidade responsável por todos os equipamentos separados |
+| `starts_at`, `ends_at` | cópia imutável do intervalo `[início, fim)` do orçamento |
+| `status` | `CONFIRMED` ou `CANCELLED` |
+| `confirmed_at`, `cancelled_at` | instantes das transições |
+| `display_code` | código amigável `RES-XXXXXXXX` derivado do UUID |
+| `clean()` | valida tenant, período e igualdade com o orçamento |
+
+Uma reserva é persistida somente durante a confirmação transacional. Não existe rascunho
+de reserva: o orçamento continua sendo o documento preparatório.
+
+### `ReservationAllocation`
+
+Registra qual unidade física atende qual item do orçamento durante o período reservado.
+
+| Elemento | Comportamento |
+|---|---|
+| `reservation` | cabeçalho confirmado |
+| `quotation_item` | item que solicitou o modelo e a quantidade |
+| `tool_unit` | equipamento físico específico alocado |
+| `starts_at`, `ends_at` | período repetido para consulta e constraint direta |
+| `released_at` | nulo enquanto bloqueia; preenchido no cancelamento |
+| `active` | verdadeiro enquanto `released_at` estiver vazio |
+| `clean()` | valida tenant, orçamento, modelo, estabelecimento e período |
+
+`unique_tool_unit_per_reservation` impede repetir a unidade dentro da mesma reserva. No
+PostgreSQL, `prevent_overlapping_active_reservations` exclui sobreposições da mesma
+unidade usando GiST e `TSTZRANGE(..., '[)')`; a condição ignora alocações liberadas.
+
+### Serviços de disponibilidade e reserva
+
+| Elemento | Contrato |
+|---|---|
+| `ReservationUnavailable` | conflito ou quantidade insuficiente com mensagem operacional |
+| `available_units(...)` | filtra tenant, estabelecimento, modelo, estado e sobreposição |
+| `available_establishments_for_quotation(...)` | encontra filiais que atendem o orçamento completo |
+| `units_with_reservation_schedule(...)` | anexa reserva atual e próxima em duas consultas isoladas por tenant |
+| `confirm_reservation(...)` | bloqueia, seleciona unidades e grava tudo atomicamente |
+| `cancel_reservation(...)` | aplica `CONFIRMED → CANCELLED` e libera alocações |
+
+Disponibilidade considera somente `ToolUnit.status == AVAILABLE`. A confirmação não
+muda esse campo, pois a agenda permite períodos futuros não sobrepostos. Uma violação
+da exclusão PostgreSQL é traduzida em mensagem para repetir a consulta.
+
+### Formulários e views operacionais
+
+| Elemento | Responsabilidade |
+|---|---|
+| `AvailabilityForm` | filtra estabelecimento e modelo pelo tenant e valida o período |
+| `ReservationConfirmationForm` | oferece estabelecimentos ativos da locadora |
+| `reservation_list()` | lista somente reservas da organização ativa |
+| `availability_lookup()` | apresenta equipamentos específicos disponíveis |
+| `reservation_create()` | confirma orçamento enviado pelo serviço de domínio |
+| `reservation_detail()` | apresenta período, filial e equipamentos alocados |
+| `reservation_cancel()` | ação POST que libera o período sem apagar histórico |
+
+As URLs ficam sob `/app/reservas/`. O tenant sempre vem de `request.organization`.
+Enquanto uma reserva estiver confirmada, `transition_quotation()` rejeita expiração ou
+cancelamento do orçamento e orienta a liberar primeiro a reserva.
 
 ## `assets`
 
@@ -429,7 +504,9 @@ versões dentro do modelo de ferramenta e também herda a organização.
 seu formset preserva o pai ainda não salvo e atribui o tenant. Os métodos
 `display_cnpj()`, `display_document()` e `display_postal_code()` formatam dados sem
 mudar a persistência. Orçamentos e itens são somente leitura no Admin: alterações de
-período, snapshots e estados devem passar pelos serviços e telas operacionais.
+período, snapshots e estados devem passar pelos serviços e telas operacionais. Reservas
+e alocações também são somente leitura; confirmação e cancelamento pertencem aos
+serviços transacionais.
 
 O Admin acelera validação do domínio, mas não é a interface final e ainda não aplica
 escopo por organização ao usuário conectado.
@@ -448,4 +525,5 @@ escopo por organização ao usuário conectado.
 
 `development` aceita padrões inseguros apenas para a máquina do desenvolvedor. `test`
 usa hash de senha rápido e permite PostgreSQL via `DATABASE_URL`. `production` exige
-segredo, hosts e PostgreSQL e habilita proteções de HTTPS.
+segredo, hosts e PostgreSQL e habilita proteções de HTTPS. `django.contrib.postgres`
+fornece a expressão temporal e a constraint usada pelo módulo de reservas.

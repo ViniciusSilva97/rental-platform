@@ -35,6 +35,13 @@
 
 <p class="quotation-total"><strong>Total: R$ {{ quotation.total_amount|floatformat:2 }}</strong></p>
 
+{% if quotation.status == "DRAFT" %}
+    <p class="muted">
+        O envio será permitido somente se um estabelecimento ativo puder atender todo o
+        orçamento no período informado.
+    </p>
+{% endif %}
+
 <div class="actions">
     {% if quotation.status == "DRAFT" %}
         <a class="button" href="{% url 'quotations:edit' quotation.pk %}">Editar rascunho</a>
@@ -44,21 +51,30 @@
         </form>
         <form method="post" action="{% url 'quotations:transition' quotation.pk 'SENT' %}">
             {% csrf_token %}
-            <button class="button" type="submit">Marcar como enviado</button>
+            <button class="button" type="submit">Validar disponibilidade e enviar</button>
         </form>
         <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
             {% csrf_token %}
             <button class="button danger" type="submit">Cancelar</button>
         </form>
     {% elif quotation.status == "SENT" %}
-        <form method="post" action="{% url 'quotations:transition' quotation.pk 'EXPIRED' %}">
-            {% csrf_token %}
-            <button class="button secondary" type="submit">Marcar como expirado</button>
-        </form>
-        <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
-            {% csrf_token %}
-            <button class="button danger" type="submit">Cancelar</button>
-        </form>
+        {% if quotation.reservation and quotation.reservation.status == "CONFIRMED" %}
+            <a class="button" href="{% url 'reservations:detail' quotation.reservation.pk %}">Ver reserva</a>
+        {% else %}
+            {% if quotation.reservation %}
+                <a class="button" href="{% url 'reservations:detail' quotation.reservation.pk %}">Ver reserva cancelada</a>
+            {% else %}
+                <a class="button" href="{% url 'reservations:create' quotation.pk %}">Confirmar reserva</a>
+            {% endif %}
+            <form method="post" action="{% url 'quotations:transition' quotation.pk 'EXPIRED' %}">
+                {% csrf_token %}
+                <button class="button secondary" type="submit">Marcar como expirado</button>
+            </form>
+            <form method="post" action="{% url 'quotations:transition' quotation.pk 'CANCELLED' %}">
+                {% csrf_token %}
+                <button class="button danger" type="submit">Cancelar</button>
+            </form>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}

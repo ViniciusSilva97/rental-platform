@@ -1,0 +1,28 @@
+{% extends "app_base.html" %}
+
+{% block title %}Confirmar reserva — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Confirmar reserva</h1>
+<p><strong>Orçamento:</strong> {{ quotation.display_code }}</p>
+<p><strong>Cliente:</strong> {{ quotation.customer.name }}</p>
+<p><strong>Período:</strong> {{ quotation.starts_at|date:"d/m/Y H:i" }} a {{ quotation.ends_at|date:"d/m/Y H:i" }}</p>
+
+<h2>Equipamentos solicitados</h2>
+<ul>
+    {% for item in quotation.items.all %}
+        <li>{{ item.equipment_quantity }} × {{ item.tool_model }}</li>
+    {% endfor %}
+</ul>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.establishment.as_field_group }}
+    <p class="muted">
+        Ao confirmar, o sistema alocará unidades físicas específicas. Nenhum preço do
+        orçamento será alterado.
+    </p>
+    <button class="button" type="submit">Confirmar e separar equipamentos</button>
+</form>
+{% endblock %}

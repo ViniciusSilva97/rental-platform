@@ -1,0 +1,1 @@
+"""Availability and reservation domain."""

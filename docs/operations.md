@@ -84,6 +84,8 @@ O alias `/health/` evita quebrar consumidores da primeira versão.
 - `/app/ferramentas/cadastrar/`: cadastro assistido em lote;
 - `/app/orcamentos/`: lista de orçamentos da locadora ativa;
 - `/app/orcamentos/novo/`: criação assistida com um ou mais modelos;
+- `/app/reservas/`: reservas confirmadas da locadora ativa;
+- `/app/reservas/disponibilidade/`: consulta por filial, modelo e período;
 - `/admin/`: administração técnica, não destinada à operação normal.
 
 Ainda não há cadastro público. Crie o primeiro usuário com `createsuperuser` ou pelo
@@ -108,7 +110,8 @@ diferenças que uma suíte exclusivamente SQLite poderia esconder.
 Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, políticas e cálculos de
 preço, perfis patrimoniais, onboarding transacional, sessão adulterada, seleção de
 locadora, cadastro assistido, rollback de lote, concorrência de códigos, orçamentos,
-conversões de hora/dia/mês, snapshots, estados comerciais, vínculos
+conversões de hora/dia/mês, snapshots, estados comerciais, disponibilidade,
+alocações físicas, cancelamento, exclusão temporal e concorrência de reservas, vínculos
 inativos, invariantes multi-tenant, valores monetários, estados
 iniciais e endpoints operacionais. Os fluxos inline com pai ainda não salvo também são
 exercitados. As migrations de estabelecimento e de conversão da diária legada são
@@ -117,6 +120,10 @@ testadas sobre estados anteriores ao release.
 O teste concorrente de códigos exige PostgreSQL e é ignorado quando a suíte usa SQLite.
 Isso é intencional: `select_for_update()` só pode ser validado em um banco com bloqueio
 de linha real, e a CI executa obrigatoriamente com PostgreSQL 17.
+
+Os testes de exclusão e confirmação simultânea de reservas também exigem PostgreSQL.
+A migration habilita `btree_gist` e cria a constraint temporal somente nesse banco;
+SQLite valida o fluxo funcional, mas não deve ser usado como evidência de concorrência.
 
 ## Teste funcional do orçamento
 
@@ -137,6 +144,37 @@ Antes do merge da Issue #9:
 
 Teste também um fim anterior ao início, uma unidade sem tarifa configurada e um preço
 com vigência futura. A interface deve recusar os três casos sem criar registros parciais.
+
+## Teste funcional de disponibilidade e reservas
+
+Antes do merge da Issue #10:
+
+1. atualize a branch, reconstrua os contêineres e execute `python manage.py migrate`;
+2. crie um orçamento sem quantidade disponível e confirme que ele permanece em
+   rascunho ao tentar marcá-lo como enviado;
+3. confirme que existe um orçamento viável e equipamentos `AVAILABLE` na mesma filial;
+4. marque o orçamento como enviado;
+5. abra **Reservas → Consultar disponibilidade** e pesquise modelo, filial e período;
+6. confira que os códigos físicos disponíveis aparecem, não apenas uma quantidade;
+7. abra o orçamento enviado e clique em **Confirmar reserva**;
+8. confirme que somente filiais capazes de atender todo o orçamento são oferecidas;
+9. escolha o estabelecimento e confirme que a reserva mostra unidades específicas;
+10. abra **Ferramentas** e confirme que a unidade continua **Apta para locação**, mas a
+    agenda mostra **Reservado agora** ou a próxima reserva;
+11. tente confirmar outro orçamento sobreposto com quantidade superior ao saldo e
+   confirme que a operação é recusada sem criar reserva parcial;
+12. use um período que começa exatamente quando a primeira reserva termina e confirme
+   que a unidade volta a ser elegível;
+13. tente expirar ou cancelar o orçamento reservado e confirme a orientação para
+   cancelar primeiro a reserva;
+14. cancele a reserva e confirme que as alocações aparecem como liberadas;
+15. consulte novamente o mesmo período e confirme que os equipamentos voltaram;
+16. volte à listagem e confirme que a agenda deixou de indicar a reserva cancelada;
+17. depois do cancelamento da reserva, encerre o orçamento normalmente.
+
+Teste também uma ferramenta em manutenção e uma filial diferente. A primeira não pode
+aparecer como disponível; a segunda não pode acessar equipamentos de outra filial ou
+organização.
 
 ## Recuperação e backup
 

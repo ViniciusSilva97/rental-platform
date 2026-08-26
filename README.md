@@ -19,7 +19,13 @@ A base atual — com a `v0.3.0` em desenvolvimento — cobre:
 - orçamentos em rascunho com múltiplos modelos de ferramenta;
 - conversão determinística do período em horas, dias ou meses;
 - snapshot de tarifa, quantidade cobrada, regra de fração e total;
-- envio, expiração e cancelamento sem alterar a memória de cálculo;
+- envio condicionado à disponibilidade integral em pelo menos um estabelecimento;
+- expiração e cancelamento sem alterar a memória de cálculo;
+- consulta de disponibilidade por estabelecimento, modelo e período;
+- listagem física com condição operacional separada da agenda de reservas;
+- reservas confirmadas com equipamentos físicos específicos;
+- prevenção de sobreposição, concorrência e acesso entre locadoras;
+- cancelamento com liberação do período e preservação do histórico;
 - painel administrativo, verificações de saúde e configuração por ambiente;
 - testes automatizados e integração contínua com PostgreSQL.
 
@@ -91,10 +97,20 @@ equipamentos físicos em uma única operação. Códigos como `EQ-000001` são a
 preços e dados patrimoniais são etapas opcionais e claramente separadas. A operação é
 atômica: um erro não deixa modelos, equipamentos ou perfis parciais.
 
+A listagem separa condição e agenda. `AVAILABLE` é apresentado como **Apta para
+locação**, enquanto reservas atuais e futuras aparecem em uma coluna própria; assim,
+uma reserva futura não altera permanentemente o estado físico do equipamento.
+
 Em `/app/orcamentos/`, o usuário escolhe cliente, período, ferramentas, quantidades e
 unidades de cobrança. O Django seleciona a política vigente no início da locação,
 calcula o total e guarda um snapshot reproduzível. Somente rascunhos podem ser editados
-ou recalculados; enviar, expirar ou cancelar preserva os valores já registrados.
+ou recalculados. O envio exige que uma unidade ativa consiga atender integralmente as
+quantidades no período; expirar ou cancelar preserva os valores já registrados.
+
+Em `/app/reservas/`, a locadora consulta disponibilidade e confirma um orçamento
+enviado em um estabelecimento. O sistema escolhe unidades físicas específicas e
+protege o intervalo semiaberto `[início, fim)` contra sobreposição. Cancelar a reserva
+libera o período sem apagar as alocações históricas.
 
 ## Verificações
 
@@ -135,12 +151,14 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 - [Auditoria da v0.2.0](docs/versions/v0.2.0.md)
 - [Auditoria da v0.2.1](docs/versions/v0.2.1.md)
 - [Auditoria da v0.2.2](docs/versions/v0.2.2.md)
+- [Auditoria da v0.3.0 em desenvolvimento](docs/versions/v0.3.0.md)
 - [Contexto compacto para IA](docs/ai-context.md)
 
 ## Próximo incremento
 
-A próxima etapa da versão `0.3.0` é a disponibilidade com reservas sem sobreposição.
-Ela consumirá os orçamentos reproduzíveis sem fazer um orçamento bloquear estoque.
+Após a estabilização da `v0.3.0`, a próxima etapa será transformar reservas confirmadas
+em contratos, retirada e devolução sem misturar esses eventos com o orçamento ou com a
+disponibilidade temporal.
 
 ## Licença
 

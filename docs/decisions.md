@@ -226,3 +226,45 @@ deve bloquear estoque antes da confirmação comercial.
 
 **Adiado:** descontos, impostos, aceite eletrônico, reserva, contrato e cobrança não
 pertencem à Issue #9.
+
+## ADR-014 — Reserva temporal com alocações físicas e exclusão no PostgreSQL
+
+**Status:** aceito.
+
+**Decisão:** uma reserva confirmada nasce de um orçamento `SENT`, preserva seu intervalo
+`[início, fim)` e aloca unidades físicas específicas de um único estabelecimento. Cada
+orçamento gera no máximo uma reserva. Cancelamento marca reserva e alocações como
+liberadas sem apagar histórico.
+
+**Motivo:** quantidade disponível não é um contador permanente; depende do modelo, do
+estabelecimento, da condição operacional e do período. Guardar cada `ToolUnit` alocada
+permite explicar conflitos, cancelamentos e futuras retiradas.
+
+**Concorrência:** o serviço bloqueia registros com `select_for_update()` e tenta pular
+unidades já bloqueadas. A proteção final é uma constraint de exclusão PostgreSQL GiST
+que combina igualdade de `tool_unit_id` com sobreposição de
+`TSTZRANGE(starts_at, ends_at, '[)')`, condicionada a `released_at IS NULL`. A migration
+habilita `btree_gist` e mantém o SQLite local compatível sem fingir que ele valida a
+mesma concorrência.
+
+**Estado operacional:** confirmar uma reserva não muda `ToolUnit.status`. Esse campo
+continua representando se o equipamento pode operar; a disponibilidade temporal é
+derivada das alocações. Assim, uma reserva futura não impede automaticamente outra
+reserva não sobreposta.
+
+Na interface, `AVAILABLE` é exibido como **Apta para locação**. A lista de equipamentos
+mantém outra coluna para **Livre agora**, **Reservado agora** e próxima reserva. Essa
+separação evita que condição física seja interpretada como agenda livre.
+
+**Integração comercial:** reserva confirmada bloqueia expiração e cancelamento do
+orçamento. A reserva deve ser cancelada primeiro, evitando documento terminal com
+estoque ainda comprometido.
+
+Antes da transição de rascunho para enviado, o sistema exige que ao menos um
+estabelecimento ativo possua, sozinho, disponibilidade para todos os modelos e
+quantidades do orçamento. Essa consulta evita apresentar uma oferta sabidamente
+inviável, mas não bloqueia estoque: a garantia concorrente continua acontecendo apenas
+na confirmação da reserva. As filiais elegíveis são as únicas oferecidas nessa etapa.
+
+**Adiado:** múltiplos estabelecimentos na mesma reserva, escolha manual da unidade,
+lista de espera, expiração automática, contrato, retirada, devolução e manutenção.

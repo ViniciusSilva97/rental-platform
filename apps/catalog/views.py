@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.shortcuts import redirect, render
 
+from apps.reservations.services import units_with_reservation_schedule
+
 from .forms import AssistedToolRegistrationForm
 from .models import ToolUnit
 
@@ -12,10 +14,13 @@ from .models import ToolUnit
 def equipment_list(request):
     if request.organization is None:
         return redirect("workspace:home")
-    units = (
-        ToolUnit.objects.filter(organization=request.organization)
-        .select_related("tool_model", "establishment")
-        .order_by("asset_code")
+    units = units_with_reservation_schedule(
+        organization=request.organization,
+        queryset=(
+            ToolUnit.objects.filter(organization=request.organization)
+            .select_related("tool_model", "establishment")
+            .order_by("asset_code")
+        ),
     )
     return render(request, "catalog/equipment_list.html", {"units": units})
 

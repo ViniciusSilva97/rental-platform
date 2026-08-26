@@ -100,7 +100,7 @@ class AssetCodeSequence(TimeStampedModel):
 
 class ToolUnit(TimeStampedModel):
     class Status(models.TextChoices):
-        AVAILABLE = "AVAILABLE", "Disponível"
+        AVAILABLE = "AVAILABLE", "Apta para locação"
         RESERVED = "RESERVED", "Reservada"
         RENTED = "RENTED", "Alugada"
         INSPECTION = "INSPECTION", "Em inspeção"

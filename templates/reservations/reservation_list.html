@@ -1,0 +1,37 @@
+{% extends "app_base.html" %}
+
+{% block title %}Reservas — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Reservas</h1>
+<p class="muted">
+    Reservas confirmadas bloqueiam equipamentos específicos somente durante o período informado.
+</p>
+
+<a class="button" href="{% url 'reservations:availability' %}">Consultar disponibilidade</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Estabelecimento</th>
+            <th>Período</th>
+            <th>Situação</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reservation in reservations %}
+            <tr>
+                <td><a href="{% url 'reservations:detail' reservation.pk %}">{{ reservation.display_code }}</a></td>
+                <td>{{ reservation.quotation.customer.name }}</td>
+                <td>{{ reservation.establishment.name }}</td>
+                <td>{{ reservation.starts_at|date:"d/m/Y H:i" }} a {{ reservation.ends_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ reservation.get_status_display }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5">Nenhuma reserva cadastrada.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

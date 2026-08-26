@@ -44,6 +44,14 @@ Descobertas fora do escopo devem virar uma nova Issue.
 - Itens de orçamento preservam política, tarifa, quantidades e total como snapshot.
 - Somente rascunhos podem mudar; envio, expiração e cancelamento preservam os itens.
 - Um orçamento não reserva estoque nem altera o estado de `ToolUnit`.
+- Somente orçamento `SENT` pode gerar uma reserva; cada orçamento gera no máximo uma.
+- Reservas e alocações preservam o intervalo `[início, fim)` do orçamento.
+- Disponibilidade deriva de alocações ativas e do estado operacional da `ToolUnit`.
+- Confirmações usam `confirm_reservation()` e cancelamentos usam `cancel_reservation()`.
+- Cancelar marca as alocações como liberadas; histórico de equipamento não é apagado.
+- Uma reserva confirmada deve ser cancelada antes de encerrar seu orçamento.
+- PostgreSQL impede sobreposição por equipamento; SQLite depende do serviço e não
+  substitui a validação concorrente da CI.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.
 - Relacionamentos entre registros de organizações diferentes são inválidos.
 - Valores monetários usam `DecimalField`; nunca use `float`.
