@@ -123,6 +123,11 @@ por `request.organization`; uma única unidade é selecionada automaticamente e,
 há filiais, a matriz é a sugestão inicial. Cada equipamento nasce como `AVAILABLE`.
 Dados comuns de aquisição só geram perfis após confirmação explícita do usuário.
 
+Na listagem operacional, `AVAILABLE` significa **Apta para locação**, não ausência de
+compromisso temporal. A view compõe catálogo e reservas em duas consultas: uma para os
+equipamentos e outra para alocações ativas atuais ou futuras. A tela mostra condição e
+agenda separadamente, sem criar dependência de reservas dentro do modelo de catálogo.
+
 ### Orçamento reproduzível
 
 `save_draft_quotation()` é a fronteira transacional para criar e substituir um
@@ -155,6 +160,10 @@ apenas encostam podem compartilhar a mesma unidade.
 somente estabelecimentos capazes de atender o orçamento completo. Ela protege o envio
 de uma oferta sabidamente inviável e restringe as opções da confirmação, mas não cria
 alocações; a disponibilidade ainda pode mudar até `confirm_reservation()`.
+
+`units_with_reservation_schedule()` anexa a cada equipamento a alocação vigente e a
+próxima futura, ignorando alocações liberadas e outros tenants. A composição usa
+`Prefetch`, mantendo duas consultas independentemente da quantidade de equipamentos.
 
 `confirm_reservation()` aceita somente orçamento `SENT`, bloqueia orçamento,
 estabelecimento e unidades candidatas, seleciona equipamentos específicos e grava

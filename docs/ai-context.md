@@ -51,6 +51,7 @@ produção/Docker/CI e SQLite opcional no desenvolvimento.
 29. Cancelar libera alocações sem apagar o histórico.
 30. `ToolUnit.status` representa condição operacional; agenda é derivada das alocações.
 31. Reserva confirmada deve ser cancelada antes de expirar ou cancelar o orçamento.
+32. A UI nunca deve apresentar `AVAILABLE` sozinho como prova de agenda livre.
 
 ## Próxima mudança recomendada
 

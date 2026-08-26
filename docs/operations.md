@@ -159,15 +159,18 @@ Antes do merge da Issue #10:
 7. abra o orçamento enviado e clique em **Confirmar reserva**;
 8. confirme que somente filiais capazes de atender todo o orçamento são oferecidas;
 9. escolha o estabelecimento e confirme que a reserva mostra unidades específicas;
-10. tente confirmar outro orçamento sobreposto com quantidade superior ao saldo e
+10. abra **Ferramentas** e confirme que a unidade continua **Apta para locação**, mas a
+    agenda mostra **Reservado agora** ou a próxima reserva;
+11. tente confirmar outro orçamento sobreposto com quantidade superior ao saldo e
    confirme que a operação é recusada sem criar reserva parcial;
-11. use um período que começa exatamente quando a primeira reserva termina e confirme
+12. use um período que começa exatamente quando a primeira reserva termina e confirme
    que a unidade volta a ser elegível;
-12. tente expirar ou cancelar o orçamento reservado e confirme a orientação para
+13. tente expirar ou cancelar o orçamento reservado e confirme a orientação para
    cancelar primeiro a reserva;
-13. cancele a reserva e confirme que as alocações aparecem como liberadas;
-14. consulte novamente o mesmo período e confirme que os equipamentos voltaram;
-15. depois do cancelamento da reserva, encerre o orçamento normalmente.
+14. cancele a reserva e confirme que as alocações aparecem como liberadas;
+15. consulte novamente o mesmo período e confirme que os equipamentos voltaram;
+16. volte à listagem e confirme que a agenda deixou de indicar a reserva cancelada;
+17. depois do cancelamento da reserva, encerre o orçamento normalmente.
 
 Teste também uma ferramenta em manutenção e uma filial diferente. A primeira não pode
 aparecer como disponível; a segunda não pode acessar equipamentos de outra filial ou

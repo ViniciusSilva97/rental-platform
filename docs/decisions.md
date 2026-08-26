@@ -252,6 +252,10 @@ continua representando se o equipamento pode operar; a disponibilidade temporal 
 derivada das alocações. Assim, uma reserva futura não impede automaticamente outra
 reserva não sobreposta.
 
+Na interface, `AVAILABLE` é exibido como **Apta para locação**. A lista de equipamentos
+mantém outra coluna para **Livre agora**, **Reservado agora** e próxima reserva. Essa
+separação evita que condição física seja interpretada como agenda livre.
+
 **Integração comercial:** reserva confirmada bloqueia expiração e cancelamento do
 orçamento. A reserva deve ser cancelada primeiro, evitando documento terminal com
 estoque ainda comprometido.

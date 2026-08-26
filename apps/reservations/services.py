@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Prefetch
 from django.utils import timezone
 
 from apps.catalog.models import ToolUnit
@@ -93,6 +93,40 @@ def available_establishments_for_quotation(*, organization, quotation):
             available_establishment_ids.append(establishment.pk)
 
     return establishments.filter(pk__in=available_establishment_ids)
+
+
+def units_with_reservation_schedule(*, organization, queryset, at=None):
+    reference_time = at or timezone.now()
+    active_allocations = (
+        ReservationAllocation.objects.filter(
+            organization=organization,
+            released_at__isnull=True,
+            ends_at__gt=reference_time,
+        )
+        .select_related("reservation")
+        .order_by("starts_at")
+    )
+    units = list(
+        queryset.filter(organization=organization).prefetch_related(
+            Prefetch(
+                "reservation_allocations",
+                queryset=active_allocations,
+                to_attr="active_reservation_schedule",
+            )
+        )
+    )
+    for unit in units:
+        unit.current_reservation_allocation = None
+        unit.next_reservation_allocation = None
+        for allocation in unit.active_reservation_schedule:
+            if allocation.starts_at <= reference_time < allocation.ends_at:
+                unit.current_reservation_allocation = allocation
+            elif (
+                allocation.starts_at > reference_time
+                and unit.next_reservation_allocation is None
+            ):
+                unit.next_reservation_allocation = allocation
+    return units
 
 
 def _locked_available_units(*, organization, establishment, tool_model, starts_at, ends_at):

@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from threading import Barrier
 
@@ -32,6 +32,7 @@ from apps.reservations.services import (
     available_units,
     cancel_reservation,
     confirm_reservation,
+    units_with_reservation_schedule,
 )
 
 User = get_user_model()
@@ -162,6 +163,88 @@ def test_availability_uses_half_open_interval_and_filters_operational_status():
 
     assert list(overlapping) == []
     assert list(adjacent) == [units[0]]
+
+
+@pytest.mark.django_db
+def test_equipment_list_separates_operational_condition_from_schedule(client):
+    organization, establishment, customer, tool_model, units = create_domain(unit_count=3)
+    now = timezone.now()
+    current_quote = create_sent_quotation(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=1),
+    )
+    current_reservation, _ = confirm_reservation(
+        organization=organization,
+        quotation=current_quote,
+        establishment=establishment,
+    )
+    future_quote = create_sent_quotation(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+        starts_at=now + timedelta(hours=2),
+        ends_at=now + timedelta(hours=3),
+    )
+    future_reservation, _ = confirm_reservation(
+        organization=organization,
+        quotation=future_quote,
+        establishment=establishment,
+    )
+    units[2].status = ToolUnit.Status.MAINTENANCE
+    units[2].save(update_fields=["status", "updated_at"])
+    client.force_login(create_user(organization))
+
+    response = client.get(reverse("catalog:equipment-list"))
+
+    assert response.status_code == 200
+    listed_units = response.context["units"]
+    assert listed_units[0].current_reservation_allocation.reservation == current_reservation
+    assert listed_units[0].next_reservation_allocation.reservation == future_reservation
+    assert listed_units[1].current_reservation_allocation is None
+    assert listed_units[1].next_reservation_allocation is None
+    content = response.content.decode()
+    assert "Apta para locação" in content
+    assert "Reservado agora" in content
+    assert "Próxima reserva" in content
+    assert "Livre agora" in content
+    assert "Em manutenção" in content
+    assert "Indisponível para novas reservas" in content
+
+
+@pytest.mark.django_db
+def test_schedule_query_ignores_released_and_cross_tenant_allocations(
+    django_assert_num_queries,
+):
+    organization, establishment, customer, tool_model, units = create_domain(unit_count=1)
+    quotation = create_sent_quotation(
+        organization=organization,
+        customer=customer,
+        tool_model=tool_model,
+        starts_at=timezone.now() - timedelta(hours=1),
+        ends_at=timezone.now() + timedelta(hours=1),
+    )
+    reservation, _ = confirm_reservation(
+        organization=organization,
+        quotation=quotation,
+        establishment=establishment,
+    )
+    cancel_reservation(organization=organization, reservation=reservation)
+    other_organization, _, _, _, _ = create_domain("b", unit_count=1)
+
+    with django_assert_num_queries(2):
+        scheduled = units_with_reservation_schedule(
+            organization=organization,
+            queryset=ToolUnit.objects.all(),
+        )
+
+    assert scheduled == [units[0]]
+    assert scheduled[0].current_reservation_allocation is None
+    assert scheduled[0].next_reservation_allocation is None
+    assert all(unit.organization == organization for unit in scheduled)
+    assert other_organization != organization
 
 
 @pytest.mark.django_db

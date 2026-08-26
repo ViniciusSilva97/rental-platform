@@ -4,7 +4,10 @@
 
 {% block content %}
 <h1>Equipamentos físicos</h1>
-<p class="muted">Cada equipamento recebe um código interno automático e pertence à locadora ativa.</p>
+<p class="muted">
+    A condição mostra se o equipamento pode operar. A agenda informa reservas atuais e
+    futuras sem alterar permanentemente essa condição.
+</p>
 
 <a class="button" href="{% url 'catalog:assisted-registration' %}">Cadastrar novo lote</a>
 
@@ -14,7 +17,8 @@
             <th>Código</th>
             <th>Modelo</th>
             <th>Unidade/filial</th>
-            <th>Situação</th>
+            <th>Condição operacional</th>
+            <th>Agenda</th>
         </tr>
     </thead>
     <tbody>
@@ -24,9 +28,32 @@
                 <td>{{ unit.tool_model }}</td>
                 <td>{{ unit.establishment.name }}</td>
                 <td>{{ unit.get_status_display }}</td>
+                <td>
+                    {% if unit.current_reservation_allocation %}
+                        <strong>Reservado agora</strong>
+                        até {{ unit.current_reservation_allocation.ends_at|date:"d/m/Y H:i" }}
+                        <a href="{% url 'reservations:detail' unit.current_reservation_allocation.reservation_id %}">
+                            Ver reserva
+                        </a>
+                    {% elif unit.status == "AVAILABLE" %}
+                        <strong>Livre agora</strong>
+                    {% else %}
+                        <strong>Indisponível para novas reservas</strong>
+                    {% endif %}
+                    {% if unit.next_reservation_allocation %}
+                        <span class="helptext">
+                            Próxima reserva:
+                            {{ unit.next_reservation_allocation.starts_at|date:"d/m/Y H:i" }} a
+                            {{ unit.next_reservation_allocation.ends_at|date:"d/m/Y H:i" }}.
+                            <a href="{% url 'reservations:detail' unit.next_reservation_allocation.reservation_id %}">
+                                Ver reserva
+                            </a>
+                        </span>
+                    {% endif %}
+                </td>
             </tr>
         {% empty %}
-            <tr><td colspan="4">Nenhum equipamento cadastrado.</td></tr>
+            <tr><td colspan="5">Nenhum equipamento cadastrado.</td></tr>
         {% endfor %}
     </tbody>
 </table>

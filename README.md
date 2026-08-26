@@ -22,6 +22,7 @@ A base atual — com a `v0.3.0` em desenvolvimento — cobre:
 - envio condicionado à disponibilidade integral em pelo menos um estabelecimento;
 - expiração e cancelamento sem alterar a memória de cálculo;
 - consulta de disponibilidade por estabelecimento, modelo e período;
+- listagem física com condição operacional separada da agenda de reservas;
 - reservas confirmadas com equipamentos físicos específicos;
 - prevenção de sobreposição, concorrência e acesso entre locadoras;
 - cancelamento com liberação do período e preservação do histórico;
@@ -95,6 +96,10 @@ Em `/app/ferramentas/`, o cadastro assistido cria categoria, modelo e até 100
 equipamentos físicos em uma única operação. Códigos como `EQ-000001` são automáticos;
 preços e dados patrimoniais são etapas opcionais e claramente separadas. A operação é
 atômica: um erro não deixa modelos, equipamentos ou perfis parciais.
+
+A listagem separa condição e agenda. `AVAILABLE` é apresentado como **Apta para
+locação**, enquanto reservas atuais e futuras aparecem em uma coluna própria; assim,
+uma reserva futura não altera permanentemente o estado físico do equipamento.
 
 Em `/app/orcamentos/`, o usuário escolhe cliente, período, ferramentas, quantidades e
 unidades de cobrança. O Django seleciona a política vigente no início da locação,

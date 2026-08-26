@@ -239,7 +239,9 @@ mantido.
 | `__str__()` | combina código patrimonial e modelo |
 
 Estados existentes: `AVAILABLE`, `RESERVED`, `RENTED`, `INSPECTION`, `MAINTENANCE`,
-`DAMAGED` e `INACTIVE`. A enumeração limita valores, mas ainda não controla transições.
+`DAMAGED` e `INACTIVE`. `AVAILABLE` recebe o rótulo **Apta para locação** porque indica
+condição operacional; não garante ausência de reserva no período. A enumeração limita
+valores, mas ainda não controla transições.
 Quando locações forem implementadas, mudanças de estado deverão passar por um serviço
 transacional com regras explícitas e histórico.
 
@@ -264,7 +266,7 @@ organização antes de tocar a sequência; por isso `max(asset_code) + 1` e
 |---|---|
 | `AssistedToolRegistrationForm` | filtra relacionamentos pelo tenant e organiza as quatro etapas |
 | `assisted_registration()` | usa somente `request.organization` e reporta rollback/conflitos |
-| `equipment_list()` | lista exclusivamente equipamentos da locadora ativa |
+| `equipment_list()` | lista equipamentos do tenant e compõe condição com agenda atual/futura |
 
 As etapas visuais são modelo, equipamentos, preços e aquisição. Preço e perfil
 patrimonial são opcionais. A confirmação patrimonial é obrigatória antes de copiar
@@ -440,6 +442,7 @@ unidade usando GiST e `TSTZRANGE(..., '[)')`; a condição ignora alocações li
 | `ReservationUnavailable` | conflito ou quantidade insuficiente com mensagem operacional |
 | `available_units(...)` | filtra tenant, estabelecimento, modelo, estado e sobreposição |
 | `available_establishments_for_quotation(...)` | encontra filiais que atendem o orçamento completo |
+| `units_with_reservation_schedule(...)` | anexa reserva atual e próxima em duas consultas isoladas por tenant |
 | `confirm_reservation(...)` | bloqueia, seleciona unidades e grava tudo atomicamente |
 | `cancel_reservation(...)` | aplica `CONFIRMED → CANCELLED` e libera alocações |
 
