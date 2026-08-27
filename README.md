@@ -140,6 +140,8 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 
 ## Documentação
 
+- [Site público da documentação](https://viniciussilva97.github.io/rental-platform/)
+- [Manual de uso](docs/manual.md)
 - [Índice técnico](docs/index.md)
 - [Como contribuir](CONTRIBUTING.md)
 - [Fluxo de desenvolvimento e Code Review](docs/development-workflow.md)
