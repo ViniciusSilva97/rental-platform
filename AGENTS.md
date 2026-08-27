@@ -8,7 +8,7 @@ Leia, nesta ordem, antes de alterar o projeto:
 4. `docs/ai-context.md`;
 5. `docs/architecture.md`;
 6. `docs/code-reference.md`;
-7. `docs/versions/v0.2.2.md`.
+7. `docs/versions/v0.3.0.md`.
 
 ## Fluxo obrigatório de mudança
 
