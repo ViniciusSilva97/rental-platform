@@ -16,6 +16,8 @@ desenvolvimento.
 - `apps/reservations`: disponibilidade, confirmação, alocações físicas e cancelamento.
 - `common`: UUID/timestamps, CPF, CNPJ, CEP e health checks.
 - `config/settings`: ambientes.
+- `mkdocs.yml`: navegação e publicação do site de documentação.
+- `docs/manual.md`: fluxo operacional e solução de problemas para usuários.
 - `docs/decisions.md`: decisões aceitas e planejadas.
 
 ## Invariantes que não podem ser quebradas

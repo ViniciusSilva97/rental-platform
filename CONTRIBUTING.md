@@ -71,6 +71,12 @@ uv run python manage.py check
 uv run pytest
 ```
 
+Mudanças na documentação também exigem:
+
+```bash
+uv run mkdocs build --strict
+```
+
 Alterações de configuração de produção também exigem `check --deploy`. Migrations e
 recursos dependentes de PostgreSQL devem ser exercitados na CI.
 

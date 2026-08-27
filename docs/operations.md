@@ -176,6 +176,29 @@ Teste também uma ferramenta em manutenção e uma filial diferente. A primeira 
 aparecer como disponível; a segunda não pode acessar equipamentos de outra filial ou
 organização.
 
+## Documentação e GitHub Pages
+
+O site público usa Material for MkDocs. Para instalar todas as dependências do projeto
+e abrir uma prévia local:
+
+```bash
+uv sync --frozen --all-groups
+uv run --no-sync mkdocs serve
+```
+
+Acesse `http://127.0.0.1:8000/rental-platform/`. Antes de publicar, valide em modo
+estrito:
+
+```bash
+uv run --no-sync mkdocs build --strict
+```
+
+O workflow `Documentation` compila o site em Pull Requests. Após um push na `main`, o
+mesmo artefato é implantado em
+`https://viniciussilva97.github.io/rental-platform/` com permissões restritas a Pages.
+O GitHub Pages hospeda somente a documentação estática; ele não executa Django nem
+substitui a implantação da aplicação.
+
 ## Recuperação e backup
 
 O projeto ainda não automatiza backup. Antes de armazenar dados reais:

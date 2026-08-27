@@ -9,6 +9,7 @@ Leia, nesta ordem, antes de alterar o projeto:
 5. `docs/architecture.md`;
 6. `docs/code-reference.md`;
 7. `docs/versions/v0.3.0.md`.
+8. `docs/manual.md`, quando a mudança afetar o uso do sistema.
 
 ## Fluxo obrigatório de mudança
 
@@ -73,6 +74,12 @@ uv run ruff check .
 uv run python manage.py makemigrations --check --dry-run
 uv run python manage.py check
 uv run pytest
+```
+
+Mudanças em `docs/`, `mkdocs.yml` ou no workflow de Pages também exigem:
+
+```bash
+uv run mkdocs build --strict
 ```
 
 Atualize a documentação da versão quando mudar domínio, arquitetura, operação,
