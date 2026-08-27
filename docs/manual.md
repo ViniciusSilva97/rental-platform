@@ -4,6 +4,21 @@ Este manual acompanha o fluxo realmente disponível na Rental Platform **v0.3.0*
 Ele serve tanto para o primeiro teste local quanto para a operação diária dos módulos
 de ferramentas, orçamentos e reservas.
 
+## Tecnologia e conhecimento para fortalecer o Brasil
+
+A Rental Platform nasce com a preocupação de transformar desenvolvimento em
+conhecimento útil. Por isso, registramos decisões, explicamos os fluxos e compartilhamos
+publicamente parte do processo de construção da plataforma. Queremos ajudar estudantes,
+profissionais e empreendedores a compreender como tecnologias modernas podem resolver
+problemas reais e tornar pequenos e médios negócios mais organizados, seguros e
+competitivos.
+
+Nosso compromisso é evoluir com transparência, incentivar a aprendizagem e contribuir
+para o fortalecimento da tecnologia e dos negócios no Brasil. Compartilhar conhecimento
+não significa abrir mão da autoria ou das regras de uso do projeto: o código continua
+sujeito aos termos do arquivo `LICENSE`, enquanto esta documentação busca ampliar o
+acesso ao aprendizado gerado durante seu desenvolvimento.
+
 ## Rotas rápidas
 
 | Ação | Endereço local |
