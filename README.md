@@ -4,7 +4,7 @@ Base técnica de uma plataforma para gestão de aluguel de ferramentas. O projet
 Python e Django em um monólito modular, com PostgreSQL nos ambientes compartilhados e
 SQLite como alternativa de baixo atrito para desenvolvimento local.
 
-A base atual — com a `v0.3.0` em desenvolvimento — cobre:
+A versão publicada `v0.3.0` cobre:
 
 - usuários, organizações e vínculos de acesso;
 - matriz e filiais com CNPJ numérico ou alfanumérico;
@@ -84,7 +84,7 @@ A aplicação ficará em <http://localhost:8000>, a área da locadora em
 <http://localhost:8000/app/> e o painel administrativo técnico em
 <http://localhost:8000/admin/>.
 
-## Área operacional em desenvolvimento
+## Área operacional
 
 A área `/app/` exige autenticação. Um usuário sem vínculo passa por um onboarding que
 cria, em uma única transação, sua locadora, a matriz e o vínculo de proprietário. Com
@@ -151,14 +151,13 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 - [Auditoria da v0.2.0](docs/versions/v0.2.0.md)
 - [Auditoria da v0.2.1](docs/versions/v0.2.1.md)
 - [Auditoria da v0.2.2](docs/versions/v0.2.2.md)
-- [Auditoria da v0.3.0 em desenvolvimento](docs/versions/v0.3.0.md)
+- [Auditoria e atualização da v0.3.0](docs/versions/v0.3.0.md)
 - [Contexto compacto para IA](docs/ai-context.md)
 
 ## Próximo incremento
 
-Após a estabilização da `v0.3.0`, a próxima etapa será transformar reservas confirmadas
-em contratos, retirada e devolução sem misturar esses eventos com o orçamento ou com a
-disponibilidade temporal.
+A próxima etapa será transformar reservas confirmadas em contratos, retirada e
+devolução sem misturar esses eventos com o orçamento ou com a disponibilidade temporal.
 
 ## Licença
 

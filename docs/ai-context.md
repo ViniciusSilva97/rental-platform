@@ -1,8 +1,8 @@
 # Contexto compacto para IA
 
-Projeto Django 5.2 chamado Rental Platform. Última versão publicada: `0.2.2`; versão
-`0.3.0` em desenvolvimento. Arquitetura: monólito modular, PostgreSQL em
-produção/Docker/CI e SQLite opcional no desenvolvimento.
+Projeto Django 5.2 chamado Rental Platform. Última versão publicada: `0.3.0`.
+Arquitetura: monólito modular, PostgreSQL em produção/Docker/CI e SQLite opcional no
+desenvolvimento.
 
 ## Fonte de verdade
 
@@ -55,8 +55,8 @@ produção/Docker/CI e SQLite opcional no desenvolvimento.
 
 ## Próxima mudança recomendada
 
-Estabilizar e publicar a `v0.3.0`; depois evoluir reservas confirmadas para contratos,
-retirada, devolução e inspeção sem alterar snapshots históricos.
+Evoluir reservas confirmadas para contratos, retirada, devolução e inspeção sem alterar
+snapshots históricos.
 
 ## Como propor mudanças
 

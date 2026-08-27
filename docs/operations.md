@@ -125,9 +125,9 @@ Os testes de exclusão e confirmação simultânea de reservas também exigem Po
 A migration habilita `btree_gist` e cria a constraint temporal somente nesse banco;
 SQLite valida o fluxo funcional, mas não deve ser usado como evidência de concorrência.
 
-## Teste funcional do orçamento
+## Roteiro funcional de orçamento
 
-Antes do merge da Issue #9:
+Para validar o fluxo publicado na v0.3.0:
 
 1. atualize a branch e execute `python manage.py migrate`;
 2. entre em `/app/` e confirme que existe cliente ativo e ferramenta com preço;
@@ -145,9 +145,9 @@ Antes do merge da Issue #9:
 Teste também um fim anterior ao início, uma unidade sem tarifa configurada e um preço
 com vigência futura. A interface deve recusar os três casos sem criar registros parciais.
 
-## Teste funcional de disponibilidade e reservas
+## Roteiro funcional de disponibilidade e reservas
 
-Antes do merge da Issue #10:
+Para validar o fluxo publicado na v0.3.0:
 
 1. atualize a branch, reconstrua os contêineres e execute `python manage.py migrate`;
 2. crie um orçamento sem quantidade disponível e confirme que ele permanece em
@@ -178,7 +178,7 @@ organização.
 
 ## Recuperação e backup
 
-A v0.1.0 ainda não automatiza backup. Antes de armazenar dados reais:
+O projeto ainda não automatiza backup. Antes de armazenar dados reais:
 
 - configure backups do PostgreSQL com retenção;
 - teste uma restauração completa;
