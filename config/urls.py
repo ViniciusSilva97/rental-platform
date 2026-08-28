@@ -9,6 +9,7 @@ urlpatterns = [
     path("health/live/", health_live, name="health-live"),
     path("health/ready/", health_ready, name="health-ready"),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("app/contratos/", include("apps.contracts.urls")),
     path("app/reservas/", include("apps.reservations.urls")),
     path("app/orcamentos/", include("apps.quotations.urls")),
     path("app/ferramentas/", include("apps.catalog.urls")),

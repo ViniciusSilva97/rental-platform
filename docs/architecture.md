@@ -18,6 +18,7 @@ flowchart TD
     APP --> AST["assets"]
     APP --> QUO["quotations"]
     APP --> RES["reservations"]
+    APP --> CON["contracts"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
@@ -26,6 +27,7 @@ flowchart TD
     AST --> DB
     QUO --> DB
     RES --> DB
+    CON --> DB
 ```
 
 ## Módulos
@@ -40,6 +42,7 @@ flowchart TD
 | `assets` | dados patrimoniais vinculados à unidade física | depreciação e contabilidade |
 | `quotations` | períodos, itens, snapshots e estados | estoque, reservas e contratos |
 | `reservations` | disponibilidade temporal e alocação física | contratos, retirada e devolução |
+| `contracts` | contrato, retirada, devolução e condição observada | preço, cobrança e pagamentos |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
@@ -55,6 +58,8 @@ o catálogo assumir regras contábeis. `quotations` relaciona `customers`, `cata
 para o catálogo ou disponibilidade para preços.
 `reservations` consome orçamentos enviados e relaciona suas linhas a unidades físicas
 de um estabelecimento. Ele não recalcula preços e não transforma reserva em contrato.
+`contracts` consome uma reserva confirmada e preserva os dados necessários para operar
+retirada e devolução. Ele não recalcula o orçamento nem decide disponibilidade.
 
 ## Isolamento por organização
 
@@ -90,6 +95,11 @@ Invariantes já implementadas:
 - o período da alocação é o mesmo da reserva e do orçamento;
 - uma unidade não possui alocações ativas sobrepostas no PostgreSQL;
 - alocações canceladas permanecem registradas e deixam de bloquear disponibilidade.
+- cada reserva possui no máximo um contrato;
+- contrato, reserva, cliente, estabelecimento, itens e equipamentos compartilham tenant;
+- cada equipamento alocado aparece no máximo uma vez no contrato;
+- retirada e devolução registram usuário e horário por unidade física;
+- devolução integral conclui o contrato, enquanto devolução parcial o mantém ativo.
 
 ### Contexto operacional ativo
 

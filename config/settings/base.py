@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "apps.assets",
     "apps.quotations",
     "apps.reservations",
+    "apps.contracts",
 ]
 
 MIDDLEWARE = [

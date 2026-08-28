@@ -86,6 +86,7 @@ O alias `/health/` evita quebrar consumidores da primeira versão.
 - `/app/orcamentos/novo/`: criação assistida com um ou mais modelos;
 - `/app/reservas/`: reservas confirmadas da locadora ativa;
 - `/app/reservas/disponibilidade/`: consulta por filial, modelo e período;
+- `/app/contratos/`: contratos, retiradas e devoluções da locadora ativa;
 - `/admin/`: administração técnica, não destinada à operação normal.
 
 Ainda não há cadastro público. Crie o primeiro usuário com `createsuperuser` ou pelo
@@ -175,6 +176,23 @@ Para validar o fluxo publicado na v0.3.0:
 Teste também uma ferramenta em manutenção e uma filial diferente. A primeira não pode
 aparecer como disponível; a segunda não pode acessar equipamentos de outra filial ou
 organização.
+
+## Roteiro funcional de contratos
+
+1. confirme uma reserva com dois equipamentos;
+2. abra a reserva e clique em **Preparar contrato**;
+3. confira snapshots, estabelecimento, período, valor e códigos físicos;
+4. confirme a retirada e verifique que todas as unidades ficaram **Alugadas**;
+5. devolva somente a primeira como **Em manutenção** e registre uma observação;
+6. confirme que o contrato continua **Em andamento** e a segunda unidade, **Alugada**;
+7. devolva a segunda como **Apta para locação**;
+8. confirme que o contrato foi concluído e que cada item mostra usuário e horário;
+9. consulte a agenda e confirme que as alocações foram liberadas sem desaparecer;
+10. tente cancelar a reserva contratada e confirme que a operação é recusada.
+
+Teste também acesso por outra organização, retirada repetida, devolução repetida e
+condição **Perdida**. Nenhum desses caminhos pode criar movimentação parcial ou cruzar
+dados entre locadoras.
 
 ## Documentação e GitHub Pages
 

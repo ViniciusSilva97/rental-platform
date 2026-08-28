@@ -40,6 +40,7 @@ nav:
   - Fluxo de desenvolvimento: development-workflow.md
   - Contexto para IA: ai-context.md
   - Versões:
+      - v0.4.0 (desenvolvimento): versions/v0.4.0.md
       - v0.3.0: versions/v0.3.0.md
       - v0.2.2: versions/v0.2.2.md
       - v0.2.1: versions/v0.2.1.md

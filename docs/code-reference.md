@@ -1,5 +1,33 @@
 # Referência de classes e funções
 
+## Contratos
+
+### `apps.contracts.models.Contract`
+
+Representa o ciclo operacional originado por uma reserva confirmada. Preserva cliente,
+documento, período e valor total como snapshots e evolui por `PREPARED`, `ACTIVE` e
+`COMPLETED`.
+
+### `apps.contracts.models.ContractItem`
+
+Relaciona cada alocação física ao contrato e registra código e nome como snapshots,
+retirada, devolução, usuários responsáveis, condição observada e notas.
+
+### `apps.contracts.services.create_contract()`
+
+Bloqueia a reserva, valida tenant e estado, cria um único contrato e materializa um item
+para cada equipamento alocado.
+
+### `apps.contracts.services.check_out_contract()`
+
+Registra a retirada de todas as unidades em uma transação e muda sua condição física
+para `RENTED`.
+
+### `apps.contracts.services.return_contract_item()`
+
+Registra uma devolução individual, atualiza a condição da unidade, libera a alocação e
+conclui o contrato quando não restar item pendente.
+
 ## `common`
 
 ### `TimeStampedModel`

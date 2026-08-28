@@ -116,6 +116,7 @@ def reservation_detail(request, reservation_id):
         Reservation.objects.select_related(
             "quotation__customer",
             "establishment",
+            "contract",
         ).prefetch_related(
             "allocations__tool_unit__tool_model",
             "allocations__quotation_item",
@@ -126,7 +127,10 @@ def reservation_detail(request, reservation_id):
     return render(
         request,
         "reservations/reservation_detail.html",
-        {"reservation": reservation},
+        {
+            "reservation": reservation,
+            "contract": getattr(reservation, "contract", None),
+        },
     )
 
 

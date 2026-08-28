@@ -1,0 +1,53 @@
+{% extends "app_base.html" %}
+
+{% block title %}{{ contract.display_code }} — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>{{ contract.display_code }}</h1>
+<p><strong>Cliente:</strong> {{ contract.customer_name_snapshot }}</p>
+{% if contract.customer_document_snapshot %}<p><strong>Documento:</strong> {{ contract.customer_document_snapshot }}</p>{% endif %}
+<p><strong>Reserva:</strong> <a href="{% url 'reservations:detail' contract.reservation.pk %}">{{ contract.reservation.display_code }}</a></p>
+<p><strong>Estabelecimento:</strong> {{ contract.establishment.name }}</p>
+<p><strong>Período:</strong> {{ contract.starts_at|date:"d/m/Y H:i" }} a {{ contract.ends_at|date:"d/m/Y H:i" }}</p>
+<p><strong>Valor contratado:</strong> R$ {{ contract.total_amount_snapshot|floatformat:2 }}</p>
+<p><strong>Situação:</strong> {{ contract.get_status_display }}</p>
+
+{% if contract.status == "PREPARED" %}
+    <p>Confira os equipamentos abaixo. A retirada será registrada para todos em uma única operação.</p>
+    <form method="post" action="{% url 'contracts:checkout' contract.pk %}">
+        {% csrf_token %}
+        <button class="button" type="submit">Confirmar retirada</button>
+    </form>
+{% endif %}
+
+<h2>Equipamentos</h2>
+{% for item in contract.items.all %}
+    <fieldset>
+        <legend>{{ item.asset_code_snapshot }} — {{ item.tool_name_snapshot }}</legend>
+        {% if item.checked_out_at %}
+            <p><strong>Retirada:</strong> {{ item.checked_out_at|date:"d/m/Y H:i" }} por {{ item.checked_out_by }}</p>
+        {% else %}
+            <p class="muted">Aguardando retirada.</p>
+        {% endif %}
+
+        {% if item.returned_at %}
+            <p><strong>Devolução:</strong> {{ item.returned_at|date:"d/m/Y H:i" }} por {{ item.returned_by }}</p>
+            <p><strong>Condição:</strong> {{ item.get_return_condition_display }}</p>
+            {% if item.return_notes %}<p><strong>Observações:</strong> {{ item.return_notes }}</p>{% endif %}
+        {% elif contract.status == "ACTIVE" %}
+            <form method="post" action="{% url 'contracts:return-item' contract.pk item.pk %}">
+                {% csrf_token %}
+                <label for="condition-{{ item.pk }}">Condição observada</label>
+                <select id="condition-{{ item.pk }}" name="condition" required>
+                    {% for value, label in return_conditions %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <label for="notes-{{ item.pk }}">Observações</label>
+                <textarea id="notes-{{ item.pk }}" name="notes" rows="3" placeholder="Registre avarias, peças ausentes ou orientações para inspeção."></textarea>
+                <button class="button secondary" type="submit">Registrar devolução deste equipamento</button>
+            </form>
+        {% endif %}
+    </fieldset>
+{% endfor %}
+{% endblock %}
