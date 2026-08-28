@@ -25,9 +25,19 @@
 </table>
 
 {% if reservation.status == "CONFIRMED" %}
-    <form method="post" action="{% url 'reservations:cancel' reservation.pk %}">
-        {% csrf_token %}
-        <button class="button danger" type="submit">Cancelar e liberar período</button>
-    </form>
+    {% if contract %}
+        <p><strong>Contrato:</strong> <a href="{% url 'contracts:detail' contract.pk %}">{{ contract.display_code }}</a></p>
+    {% else %}
+        <div class="actions">
+            <form method="post" action="{% url 'contracts:create' reservation.pk %}">
+                {% csrf_token %}
+                <button class="button" type="submit">Preparar contrato</button>
+            </form>
+            <form method="post" action="{% url 'reservations:cancel' reservation.pk %}">
+                {% csrf_token %}
+                <button class="button danger" type="submit">Cancelar e liberar período</button>
+            </form>
+        </div>
+    {% endif %}
 {% endif %}
 {% endblock %}

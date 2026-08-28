@@ -30,6 +30,7 @@ acesso ao aprendizado gerado durante seu desenvolvimento.
 | Orçamentos | `http://localhost:8000/app/orcamentos/` |
 | Disponibilidade | `http://localhost:8000/app/reservas/disponibilidade/` |
 | Reservas | `http://localhost:8000/app/reservas/` |
+| Contratos | `http://localhost:8000/app/contratos/` |
 | Administração técnica | `http://localhost:8000/admin/` |
 
 ## 1. Preparar uma máquina nova
@@ -205,6 +206,50 @@ Ordem recomendada:
 3. confirme que as alocações foram liberadas;
 4. se necessário, volte ao orçamento e cancele-o.
 
+## 9. Contrato, retirada e devolução
+
+!!! info "Incremento da v0.4.0 em desenvolvimento"
+    O ciclo contratual é a primeira capacidade planejada após a v0.3.0. Ele preserva
+    orçamento e reserva e não representa cobrança ou pagamento.
+
+### Preparar o contrato
+
+1. abra uma reserva confirmada;
+2. clique em **Preparar contrato**;
+3. confira cliente, documento, período, valor e equipamentos;
+4. confirme que cada código físico corresponde ao que será entregue.
+
+Cada reserva gera no máximo um contrato. O sistema grava snapshots do cliente, valor e
+equipamentos para que futuras alterações cadastrais não reescrevam esse histórico.
+Depois da criação do contrato, a reserva não pode mais ser cancelada.
+
+### Registrar a retirada
+
+Na página do contrato, clique em **Confirmar retirada**. Todos os equipamentos são
+movimentados em uma única transação:
+
+- o contrato passa de **Preparado** para **Em andamento**;
+- cada item registra data, hora e usuário responsável;
+- as unidades físicas passam para **Alugada**;
+- qualquer erro desfaz a retirada inteira.
+
+### Registrar devoluções
+
+Cada equipamento possui seu próprio formulário. Escolha a condição observada, registre
+as observações necessárias e confirme a devolução daquela unidade.
+
+| Condição | Efeito operacional |
+|---|---|
+| Apta para locação | volta a participar de novas consultas de disponibilidade |
+| Em inspeção | aguarda uma verificação antes de nova locação |
+| Em manutenção | fica indisponível até o reparo |
+| Danificada | preserva a avaria como condição atual |
+| Perdida | fica indisponível e registra a ocorrência no contrato |
+
+A devolução parcial libera somente a unidade devolvida e mantém o contrato em andamento.
+Quando o último equipamento retorna, o contrato é concluído automaticamente. As
+alocações permanecem no histórico, com o instante em que foram liberadas.
+
 ## Situações disponíveis
 
 ### Orçamento
@@ -222,6 +267,14 @@ Ordem recomendada:
 |---|---|
 | Confirmada | Mantém as unidades alocadas |
 | Cancelada | Libera as unidades e preserva o histórico |
+
+### Contrato
+
+| Situação | Significado |
+|---|---|
+| Preparado | aguarda conferência e retirada integral |
+| Em andamento | equipamentos retirados; aceita devoluções parciais |
+| Concluído | todas as unidades foram devolvidas |
 
 ## Solução de problemas
 
@@ -278,6 +331,6 @@ Cancele primeiro a reserva confirmada. Depois, cancele ou expire o orçamento.
 - confirme a organização ativa antes de operar dados sensíveis;
 - não trate orçamento como contrato ou pagamento.
 
-Contratos, retirada, devolução, inspeção, cobrança e pagamentos ainda não fazem parte da
-v0.3.0. A interface tradicional continuará sendo a fonte operacional mesmo quando um
-assistente de IA for adicionado futuramente.
+Cobrança, pagamentos, assinatura eletrônica, renovação e cálculo automático de avarias
+ainda não fazem parte deste incremento. A interface tradicional continuará sendo a
+fonte operacional mesmo quando um assistente de IA for adicionado futuramente.

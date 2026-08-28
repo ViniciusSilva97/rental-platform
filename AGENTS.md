@@ -51,6 +51,12 @@ Descobertas fora do escopo devem virar uma nova Issue.
 - Confirmações usam `confirm_reservation()` e cancelamentos usam `cancel_reservation()`.
 - Cancelar marca as alocações como liberadas; histórico de equipamento não é apagado.
 - Uma reserva confirmada deve ser cancelada antes de encerrar seu orçamento.
+- Somente reserva confirmada gera contrato; cada reserva gera no máximo um.
+- Contratos preservam cliente, valor, período e equipamentos como histórico.
+- Retiradas e devoluções usam os serviços transacionais do módulo `contracts`.
+- A retirada altera a condição física para `RENTED`; a devolução registra a condição
+  observada e libera a alocação sem apagar o histórico.
+- Reserva com contrato não pode ser cancelada.
 - PostgreSQL impede sobreposição por equipamento; SQLite depende do serviço e não
   substitui a validação concorrente da CI.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.

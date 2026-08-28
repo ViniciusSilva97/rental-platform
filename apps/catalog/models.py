@@ -106,6 +106,7 @@ class ToolUnit(TimeStampedModel):
         INSPECTION = "INSPECTION", "Em inspeção"
         MAINTENANCE = "MAINTENANCE", "Em manutenção"
         DAMAGED = "DAMAGED", "Danificada"
+        LOST = "LOST", "Perdida"
         INACTIVE = "INACTIVE", "Inativa"
 
     organization = models.ForeignKey(

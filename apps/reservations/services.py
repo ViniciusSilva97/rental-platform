@@ -246,6 +246,10 @@ def cancel_reservation(*, organization, reservation):
 
         if locked.status != Reservation.Status.CONFIRMED:
             raise ValidationError("Somente uma reserva confirmada pode ser cancelada.")
+        if hasattr(locked, "contract"):
+            raise ValidationError(
+                "A reserva possui contrato e não pode mais ser cancelada."
+            )
 
         cancelled_at = timezone.now()
         locked.status = Reservation.Status.CANCELLED

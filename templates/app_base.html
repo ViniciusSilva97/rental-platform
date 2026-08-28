@@ -46,6 +46,7 @@
                 {% if request.organization %}<a href="{% url 'catalog:equipment-list' %}">Ferramentas</a>{% endif %}
                 {% if request.organization %}<a href="{% url 'quotations:list' %}">Orçamentos</a>{% endif %}
                 {% if request.organization %}<a href="{% url 'reservations:list' %}">Reservas</a>{% endif %}
+                {% if request.organization %}<a href="{% url 'contracts:list' %}">Contratos</a>{% endif %}
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
                     <button type="submit">Sair</button>

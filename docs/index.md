@@ -82,6 +82,12 @@ sobreposição de agenda.
 - libera a agenda ao cancelar, sem apagar o histórico;
 - diferencia condição operacional da agenda de locação.
 
+## Em desenvolvimento para a v0.4.0
+
+- prepara contratos a partir de reservas confirmadas;
+- registra a retirada de todos os equipamentos de forma atômica;
+- permite devoluções parciais, com condição individual por equipamento.
+
 ## Limites desta versão
 
 A v0.3.0 ainda não possui telas operacionais para cadastro de clientes, contratos,

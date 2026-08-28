@@ -14,6 +14,7 @@ desenvolvimento.
 - `apps/assets`: perfil patrimonial opcional da unidade física.
 - `apps/quotations`: orçamento, conversão do período, snapshots e estados.
 - `apps/reservations`: disponibilidade, confirmação, alocações físicas e cancelamento.
+- `apps/contracts`: contrato, retirada, devolução e condição observada.
 - `common`: UUID/timestamps, CPF, CNPJ, CEP e health checks.
 - `config/settings`: ambientes.
 - `mkdocs.yml`: navegação e publicação do site de documentação.
@@ -54,11 +55,18 @@ desenvolvimento.
 30. `ToolUnit.status` representa condição operacional; agenda é derivada das alocações.
 31. Reserva confirmada deve ser cancelada antes de expirar ou cancelar o orçamento.
 32. A UI nunca deve apresentar `AVAILABLE` sozinho como prova de agenda livre.
+33. Somente reserva confirmada gera contrato e cada reserva gera no máximo um.
+34. Contrato preserva snapshots de cliente, valor e equipamentos contratados.
+35. Retirada registra usuário e horário para cada unidade e altera a condição para
+    `RENTED` em uma única transação.
+36. Devolução pode ser parcial, libera a alocação da unidade e registra sua condição.
+37. Somente a devolução de todas as unidades conclui o contrato.
+38. Reserva com contrato não pode ser cancelada.
 
 ## Próxima mudança recomendada
 
-Evoluir reservas confirmadas para contratos, retirada, devolução e inspeção sem alterar
-snapshots históricos.
+Depois do ciclo contratual básico, evoluir inspeção e avarias em uma Issue separada,
+sem misturar cobrança ou pagamento com a movimentação física.
 
 ## Como propor mudanças
 

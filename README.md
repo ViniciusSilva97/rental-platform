@@ -29,6 +29,14 @@ A versão publicada `v0.3.0` cobre:
 - painel administrativo, verificações de saúde e configuração por ambiente;
 - testes automatizados e integração contínua com PostgreSQL.
 
+Em desenvolvimento para a `v0.4.0`:
+
+- contrato criado a partir de uma reserva confirmada;
+- snapshots de cliente, valor e equipamentos contratados;
+- retirada atômica com identificação do usuário responsável;
+- devolução parcial por equipamento e condição observada;
+- conclusão automática após a devolução integral.
+
 ## Requisitos
 
 - Python 3.12 a 3.14;
@@ -112,6 +120,11 @@ enviado em um estabelecimento. O sistema escolhe unidades físicas específicas 
 protege o intervalo semiaberto `[início, fim)` contra sobreposição. Cancelar a reserva
 libera o período sem apagar as alocações históricas.
 
+Em `/app/contratos/`, uma reserva confirmada pode gerar um único contrato. A retirada
+marca todas as unidades como alugadas; cada devolução registra usuário, horário,
+condição e observações. Devoluções parciais mantêm o contrato aberto e a devolução
+integral o conclui automaticamente.
+
 ## Verificações
 
 ```bash
@@ -154,12 +167,13 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 - [Auditoria da v0.2.1](docs/versions/v0.2.1.md)
 - [Auditoria da v0.2.2](docs/versions/v0.2.2.md)
 - [Auditoria e atualização da v0.3.0](docs/versions/v0.3.0.md)
+- [Desenvolvimento da v0.4.0](docs/versions/v0.4.0.md)
 - [Contexto compacto para IA](docs/ai-context.md)
 
 ## Próximo incremento
 
-A próxima etapa será transformar reservas confirmadas em contratos, retirada e
-devolução sem misturar esses eventos com o orçamento ou com a disponibilidade temporal.
+Depois do ciclo básico de contratos, a evolução prevista inclui renovação, inspeção
+detalhada, cálculo de avarias e cobrança, cada capacidade em uma Issue independente.
 
 ## Licença
 
