@@ -87,11 +87,13 @@ sobreposição de agenda.
 - prepara contratos a partir de reservas confirmadas;
 - registra a retirada de todos os equipamentos de forma atômica;
 - permite devoluções parciais, com condição individual por equipamento.
+- compõe produtos com configurações, acessórios, consumíveis e serviços;
+- preserva acréscimos, descontos e recursos necessários em todas as etapas.
 
 ## Limites desta versão
 
-A v0.3.0 ainda não possui telas operacionais para cadastro de clientes, contratos,
-retirada, devolução, inspeção ou pagamentos. O cadastro de clientes é feito pelo Admin
+A v0.3.0 ainda não possui tela operacional para cadastro de clientes. A v0.4.0 em
+desenvolvimento já cobre contratos e adicionais, mas não inspeção detalhada ou pagamentos. O cadastro de clientes é feito pelo Admin
 técnico. O [manual](manual.md) deixa esses limites explícitos para não confundir funções
 atuais com funcionalidades planejadas.
 

@@ -3,10 +3,15 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.catalog.models import ToolUnit
+from apps.offerings.models import Offering, OfferingStock
 from apps.organizations.models import Membership
-from apps.reservations.models import Reservation, ReservationAllocation
+from apps.reservations.models import (
+    Reservation,
+    ReservationAllocation,
+    ReservationOffering,
+)
 
-from .models import Contract, ContractItem
+from .models import Contract, ContractItem, ContractOffering
 
 
 def _validate_organization(organization):
@@ -87,15 +92,46 @@ def create_contract(*, organization, reservation):
             )
             contract.save()
 
+            reserved_options = list(
+                ReservationOffering.objects.select_for_update()
+                .select_related("quotation_item_offering")
+                .filter(organization=organization, reservation=locked_reservation)
+            )
+            contract_options = {}
+            for reserved in reserved_options:
+                quoted = reserved.quotation_item_offering
+                snapshot = ContractOffering(
+                    organization=organization,
+                    contract=contract,
+                    reservation_offering=reserved,
+                    offering_name=reserved.offering_name,
+                    kind=reserved.kind,
+                    quantity=reserved.quantity,
+                    price_effect=quoted.price_effect,
+                    line_total_snapshot=quoted.line_total,
+                    requires_preparation=quoted.requires_preparation,
+                )
+                snapshot.save()
+                contract_options[quoted.pk] = snapshot
+
             items = []
             for allocation in allocations:
+                contract_offering = contract_options.get(
+                    allocation.quotation_item_offering_id
+                )
                 item = ContractItem(
                     organization=organization,
                     contract=contract,
+                    contract_offering=contract_offering,
                     reservation_allocation=allocation,
                     tool_unit=allocation.tool_unit,
                     asset_code_snapshot=allocation.tool_unit.asset_code,
-                    tool_name_snapshot=str(allocation.tool_unit.tool_model),
+                    tool_name_snapshot=(
+                        f"{contract_offering.offering_name} "
+                        f"({allocation.tool_unit.tool_model})"
+                        if contract_offering
+                        else str(allocation.tool_unit.tool_model)
+                    ),
                 )
                 item.save()
                 items.append(item)
@@ -148,7 +184,48 @@ def check_out_contract(*, organization, contract, user):
                 "Os equipamentos precisam estar aptos para retirada: " + ", ".join(invalid)
             )
 
+        options = list(
+            ContractOffering.objects.select_for_update()
+            .select_related(
+                "reservation_offering__quotation_item_offering__offering"
+            )
+            .filter(organization=organization, contract=locked)
+        )
+
         checked_out_at = timezone.now()
+        for option in options:
+            if option.kind != Offering.Kind.CONSUMABLE:
+                continue
+            reserved = option.reservation_offering
+            if reserved.consumed_at or reserved.released_at:
+                raise ValidationError(
+                    f"O estado de {option.offering_name} não permite a retirada."
+                )
+            try:
+                stock = OfferingStock.objects.select_for_update().get(
+                    organization=organization,
+                    establishment=locked.establishment,
+                    offering=reserved.quotation_item_offering.offering,
+                )
+            except OfferingStock.DoesNotExist as error:
+                raise ValidationError(
+                    f"O estoque de {option.offering_name} não foi encontrado."
+                ) from error
+            if (
+                stock.on_hand_quantity < option.quantity
+                or stock.reserved_quantity < option.quantity
+            ):
+                raise ValidationError(
+                    f"O saldo reservado de {option.offering_name} está inconsistente."
+                )
+            stock.on_hand_quantity -= option.quantity
+            stock.reserved_quantity -= option.quantity
+            stock.save(
+                update_fields=["on_hand_quantity", "reserved_quantity", "updated_at"]
+            )
+            reserved.consumed_at = checked_out_at
+            reserved.save(update_fields=["consumed_at", "updated_at"])
+
         for item in items:
             item.checked_out_at = checked_out_at
             item.checked_out_by = user

@@ -1,6 +1,7 @@
 # Manual de uso
 
-Este manual acompanha o fluxo realmente disponível na Rental Platform **v0.3.0**.
+Este manual acompanha a Rental Platform **v0.3.0** e os incrementos já implementados
+da **v0.4.0 em desenvolvimento**.
 Ele serve tanto para o primeiro teste local quanto para a operação diária dos módulos
 de ferramentas, orçamentos e reservas.
 
@@ -27,6 +28,7 @@ acesso ao aprendizado gerado durante seu desenvolvimento.
 | Área operacional | `http://localhost:8000/app/` |
 | Ferramentas | `http://localhost:8000/app/ferramentas/` |
 | Cadastrar ferramentas | `http://localhost:8000/app/ferramentas/cadastrar/` |
+| Adicionais | `http://localhost:8000/app/adicionais/` |
 | Orçamentos | `http://localhost:8000/app/orcamentos/` |
 | Disponibilidade | `http://localhost:8000/app/reservas/disponibilidade/` |
 | Reservas | `http://localhost:8000/app/reservas/` |
@@ -130,7 +132,42 @@ ferramentas. Isso não significa que sua agenda esteja livre. Consulte a disponi
 para o período desejado. Unidades em manutenção, aposentadas ou perdidas não podem ser
 alocadas.
 
-## 5. Criar um orçamento
+## 5. Cadastrar adicionais e configurações
+
+Use **Adicionais** para transformar variações reais da locação em opções estruturadas.
+Elas podem alterar preço, disponibilidade e estoque; observações livres permanecem
+separadas e não produzem efeitos automáticos.
+
+| Categoria | Exemplo | Controle operacional |
+|---|---|---|
+| Configuração | SSD ou memória instalada | pode usar unidade física e exigir preparação |
+| Acessório retornável | transformador, bateria ou ponteira | exige código físico e devolução |
+| Consumível | disco de corte ou combustível | usa saldo por estabelecimento |
+| Serviço | instalação ou entrega | altera valor sem reservar equipamento |
+| Remoção com desconto | retirar placa de vídeo | reduz o total por opção autorizada |
+
+Quando a opção for física, cadastre primeiro seu modelo e suas unidades em
+**Ferramentas**. Depois:
+
+1. abra **Adicionais > Cadastrar adicional**;
+2. informe nome, categoria, descrição e necessidade de preparação;
+3. vincule o modelo físico, quando aplicável;
+4. escolha os modelos principais compatíveis e a quantidade máxima por equipamento;
+5. defina valor único ou preço por hora, dia e mês;
+6. para consumível, informe estabelecimento e estoque inicial;
+7. salve.
+
+Compatibilidade é explícita: uma bateria de furadeira não aparece automaticamente em
+uma serra. Na cobrança por período, a opção acompanha a unidade e a quantidade cobrada
+do item principal. Remoções usam o mesmo cálculo como desconto, mas nunca podem tornar
+o orçamento negativo.
+
+!!! warning "Remoções precisam ser predefinidas"
+    Cadastre somente remoções analisadas como técnica e comercialmente seguras. Não use
+    observações livres como desconto. A futura inspeção de saída registrará a composição
+    efetivamente entregue.
+
+## 6. Criar um orçamento
 
 1. Abra **Orçamentos > Novo orçamento**.
 2. Escolha o cliente.
@@ -158,6 +195,16 @@ Exemplo: três furadeiras e duas serras formam dois itens, não cinco:
 Enquanto estiver em rascunho, o orçamento pode ser editado e recalculado. Depois do
 envio, seus itens e valores ficam imutáveis.
 
+### Configurar adicionais do item
+
+Depois de salvar o rascunho, abra o orçamento e use **Configurar adicionais** na linha
+do produto. Selecione opções compatíveis e informe a quantidade total. A tela separa
+valor-base, acréscimos, descontos, total e observações livres.
+
+Cada opção guarda nome, categoria, regra, tarifa, quantidade e total como snapshot.
+Editar período ou produtos recalcula opções ainda compatíveis. Observações podem guardar
+preferências do cliente, mas não alteram preço, estoque ou obrigação de devolução.
+
 ### Enviar ao cliente
 
 O orçamento em rascunho não bloqueia estoque. Ao clicar em **Enviar**, o sistema exige
@@ -168,7 +215,7 @@ Essa validação reduz propostas impossíveis, mas o bloqueio efetivo acontece s
 confirmação da reserva. Outra operação concorrente ainda pode ocupar uma unidade entre
 essas etapas; por isso a confirmação valida tudo novamente.
 
-## 6. Consultar disponibilidade
+## 7. Consultar disponibilidade
 
 Abra **Disponibilidade**, informe início, fim e estabelecimento. O resultado mostra os
 modelos e quantidades livres naquele intervalo, considerando:
@@ -177,11 +224,13 @@ modelos e quantidades livres naquele intervalo, considerando:
 - estabelecimento escolhido;
 - reservas e alocações ativas;
 - quantidade física necessária.
+- unidades físicas de configurações e acessórios retornáveis;
+- saldo disponível dos consumíveis selecionados.
 
 Os períodos usam a regra `[início, fim)`: o instante final não pertence à reserva.
 Assim, uma nova locação pode começar exatamente quando a anterior termina.
 
-## 7. Confirmar uma reserva
+## 8. Confirmar uma reserva
 
 1. Abra um orçamento com situação **Enviado**.
 2. Clique em **Confirmar reserva**.
@@ -193,11 +242,14 @@ orçamento gera no máximo uma reserva. No PostgreSQL, uma restrição adicional
 sobreposição do mesmo equipamento mesmo sob concorrência.
 
 Se não houver disponibilidade completa, nenhuma reserva parcial é criada.
+Acessórios retornáveis e configurações físicas recebem códigos específicos. Consumíveis
+têm saldo reservado; serviços e remoções são preservados sem movimentar estoque.
 
-## 8. Cancelar corretamente
+## 9. Cancelar corretamente
 
 O cancelamento da reserva libera suas alocações, mas preserva o histórico. Uma reserva
 confirmada deve ser cancelada antes de cancelar ou expirar o orçamento relacionado.
+Consumíveis reservados também voltam ao saldo disponível sem reduzir o estoque físico.
 
 Ordem recomendada:
 
@@ -206,7 +258,7 @@ Ordem recomendada:
 3. confirme que as alocações foram liberadas;
 4. se necessário, volte ao orçamento e cancele-o.
 
-## 9. Contrato, retirada e devolução
+## 10. Contrato, retirada e devolução
 
 !!! info "Incremento da v0.4.0 em desenvolvimento"
     O ciclo contratual é a primeira capacidade planejada após a v0.3.0. Ele preserva
@@ -232,6 +284,9 @@ movimentados em uma única transação:
 - cada item registra data, hora e usuário responsável;
 - as unidades físicas passam para **Alugada**;
 - qualquer erro desfaz a retirada inteira.
+
+Na mesma transação, consumíveis são baixados do saldo e acessórios físicos passam para
+**Alugada**. Esses acessórios aparecem entre os itens que precisam ser devolvidos.
 
 ### Registrar devoluções
 
@@ -317,6 +372,12 @@ Confirme no Admin se ele está ativo e pertence à mesma organização do usuár
 
 Consulte a disponibilidade para o mesmo período, estabelecimento e quantidades. Uma
 ferramenta pode estar operacionalmente disponível e ainda assim ocupada na agenda.
+Confira também acessórios físicos e saldo de consumíveis selecionados.
+
+### Um adicional não aparece no orçamento
+
+Confirme se está ativo, possui preço vigente, é compatível com o modelo principal e
+respeita a quantidade máxima configurada.
 
 ### Não consigo cancelar um orçamento reservado
 
@@ -330,7 +391,10 @@ Cancele primeiro a reserva confirmada. Depois, cancele ou expire o orçamento.
 - mantenha migrations aplicadas junto com cada atualização;
 - confirme a organização ativa antes de operar dados sensíveis;
 - não trate orçamento como contrato ou pagamento.
+- não use observações para substituir opções com efeito financeiro ou de estoque;
+- cadastre remoções somente após validar a configuração mínima funcional.
 
-Cobrança, pagamentos, assinatura eletrônica, renovação e cálculo automático de avarias
-ainda não fazem parte deste incremento. A interface tradicional continuará sendo a
-fonte operacional mesmo quando um assistente de IA for adicionado futuramente.
+Inspeções detalhadas antes e depois da locação, evidências, cobrança, pagamentos,
+assinatura eletrônica, renovação e cálculo automático de avarias ainda não fazem parte
+deste incremento. A interface tradicional continuará sendo a fonte operacional mesmo
+quando um assistente de IA for adicionado futuramente.
