@@ -89,6 +89,7 @@ def _quotation_form_view(request, *, quotation=None):
                 customer=form.cleaned_data["customer"],
                 starts_at=form.cleaned_data["starts_at"],
                 ends_at=form.cleaned_data["ends_at"],
+                rental_notes=form.cleaned_data["rental_notes"],
                 lines=lines,
                 quotation=quotation,
             )
@@ -140,7 +141,7 @@ def quotation_detail(request, quotation_id):
         return response
     quotation = get_object_or_404(
         Quotation.objects.select_related("customer", "reservation").prefetch_related(
-            "items__tool_model"
+            "items__tool_model", "items__offerings__inventory_tool_model"
         ),
         pk=quotation_id,
         organization=organization,

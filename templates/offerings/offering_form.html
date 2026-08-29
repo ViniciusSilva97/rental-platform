@@ -1,0 +1,37 @@
+{% extends "app_base.html" %}
+
+{% block title %}Cadastrar adicional — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Cadastrar adicional</h1>
+<p class="muted">Cadastre compatibilidade, preço e estoque em uma única operação.</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <fieldset><legend>1. Identificação</legend>
+        {{ form.name.as_field_group }}
+        {{ form.kind.as_field_group }}
+        {{ form.description.as_field_group }}
+        {{ form.inventory_tool_model.as_field_group }}
+        {{ form.requires_preparation.as_field_group }}
+        {{ form.active.as_field_group }}
+    </fieldset>
+    <fieldset><legend>2. Compatibilidade</legend>
+        {{ form.compatible_models.as_field_group }}
+        {{ form.max_quantity_per_equipment.as_field_group }}
+    </fieldset>
+    <fieldset><legend>3. Preço</legend>
+        {{ form.billing_method.as_field_group }}
+        {{ form.effective_from.as_field_group }}
+        {{ form.flat_amount.as_field_group }}
+        {{ form.hourly_rate.as_field_group }}
+        {{ form.daily_rate.as_field_group }}
+        {{ form.monthly_rate.as_field_group }}
+    </fieldset>
+    <fieldset><legend>4. Estoque de consumível</legend>
+        {{ form.stock_establishment.as_field_group }}
+        {{ form.on_hand_quantity.as_field_group }}
+    </fieldset>
+    <button class="button" type="submit">Salvar adicional</button>
+</form>
+{% endblock %}

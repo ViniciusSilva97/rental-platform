@@ -44,6 +44,7 @@
                 {% if request.organization %}<span>{{ request.organization.name }}</span>{% endif %}
                 <a href="{% url 'workspace:home' %}">Início</a>
                 {% if request.organization %}<a href="{% url 'catalog:equipment-list' %}">Ferramentas</a>{% endif %}
+                {% if request.organization %}<a href="{% url 'offerings:list' %}">Adicionais</a>{% endif %}
                 {% if request.organization %}<a href="{% url 'quotations:list' %}">Orçamentos</a>{% endif %}
                 {% if request.organization %}<a href="{% url 'reservations:list' %}">Reservas</a>{% endif %}
                 {% if request.organization %}<a href="{% url 'contracts:list' %}">Contratos</a>{% endif %}

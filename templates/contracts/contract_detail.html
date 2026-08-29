@@ -12,6 +12,19 @@
 <p><strong>Valor contratado:</strong> R$ {{ contract.total_amount_snapshot|floatformat:2 }}</p>
 <p><strong>Situação:</strong> {{ contract.get_status_display }}</p>
 
+{% if contract.offerings.all %}
+<h2>Adicionais e configurações</h2>
+<ul>
+    {% for option in contract.offerings.all %}
+        <li>
+            {{ option.offering_name }} — {{ option.quantity }} unidade(s)
+            {% if option.price_effect == "DISCOUNT" %}(desconto){% else %}(acréscimo){% endif %}
+            {% if option.requires_preparation %} — exige preparação{% endif %}
+        </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
 {% if contract.status == "PREPARED" %}
     <p>Confira os equipamentos abaixo. A retirada será registrada para todos em uma única operação.</p>
     <form method="post" action="{% url 'contracts:checkout' contract.pk %}">
@@ -24,6 +37,7 @@
 {% for item in contract.items.all %}
     <fieldset>
         <legend>{{ item.asset_code_snapshot }} — {{ item.tool_name_snapshot }}</legend>
+        {% if item.contract_offering %}<p><strong>Adicional físico retornável.</strong></p>{% endif %}
         {% if item.checked_out_at %}
             <p><strong>Retirada:</strong> {{ item.checked_out_at|date:"d/m/Y H:i" }} por {{ item.checked_out_by }}</p>
         {% else %}

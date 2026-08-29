@@ -1,0 +1,25 @@
+{% extends "app_base.html" %}
+
+{% block title %}Adicionais — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Adicionais e configurações</h1>
+<p class="muted">Opções estruturadas que podem alterar preço, disponibilidade ou estoque.</p>
+<a class="button" href="{% url 'offerings:create' %}">Cadastrar adicional</a>
+
+<table>
+    <thead><tr><th>Nome</th><th>Categoria</th><th>Estoque físico</th><th>Situação</th></tr></thead>
+    <tbody>
+    {% for offering in offerings %}
+        <tr>
+            <td>{{ offering.name }}</td>
+            <td>{{ offering.get_kind_display }}</td>
+            <td>{% if offering.inventory_tool_model %}{{ offering.inventory_tool_model }}{% else %}—{% endif %}</td>
+            <td>{% if offering.active %}Ativo{% else %}Inativo{% endif %}</td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="4">Nenhum adicional cadastrado.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

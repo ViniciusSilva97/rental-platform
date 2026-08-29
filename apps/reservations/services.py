@@ -1,13 +1,14 @@
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, connection, transaction
+from django.db import IntegrityError, connection, models, transaction
 from django.db.models import Exists, OuterRef, Prefetch
 from django.utils import timezone
 
 from apps.catalog.models import ToolUnit
+from apps.offerings.models import Offering, OfferingStock
 from apps.organizations.models import Establishment
 from apps.quotations.models import Quotation
 
-from .models import Reservation, ReservationAllocation
+from .models import Reservation, ReservationAllocation, ReservationOffering
 
 
 class ReservationUnavailable(ValidationError):
@@ -61,7 +62,10 @@ def available_establishments_for_quotation(*, organization, quotation):
         raise ValidationError("O orçamento deve pertencer à organização atual.")
 
     requirements = {}
-    for item in quotation.items.select_related("tool_model"):
+    consumable_requirements = {}
+    for item in quotation.items.select_related("tool_model").prefetch_related(
+        "offerings__offering", "offerings__inventory_tool_model"
+    ):
         if not item.tool_model.active:
             return Establishment.objects.none()
         requirement = requirements.setdefault(
@@ -69,6 +73,17 @@ def available_establishments_for_quotation(*, organization, quotation):
             {"tool_model": item.tool_model, "quantity": 0},
         )
         requirement["quantity"] += item.equipment_quantity
+        for option in item.offerings.all():
+            if option.inventory_tool_model_id:
+                physical = requirements.setdefault(
+                    option.inventory_tool_model_id,
+                    {"tool_model": option.inventory_tool_model, "quantity": 0},
+                )
+                physical["quantity"] += option.quantity
+            if option.kind == Offering.Kind.CONSUMABLE:
+                consumable_requirements[option.offering_id] = (
+                    consumable_requirements.get(option.offering_id, 0) + option.quantity
+                )
 
     establishments = Establishment.objects.filter(
         organization=organization,
@@ -79,7 +94,7 @@ def available_establishments_for_quotation(*, organization, quotation):
 
     available_establishment_ids = []
     for establishment in establishments:
-        if all(
+        units_available = all(
             available_units(
                 organization=organization,
                 establishment=establishment,
@@ -89,7 +104,17 @@ def available_establishments_for_quotation(*, organization, quotation):
             ).count()
             >= requirement["quantity"]
             for requirement in requirements.values()
-        ):
+        )
+        consumables_available = all(
+            OfferingStock.objects.filter(
+                organization=organization,
+                establishment=establishment,
+                offering_id=offering_id,
+                on_hand_quantity__gte=models.F("reserved_quantity") + quantity,
+            ).exists()
+            for offering_id, quantity in consumable_requirements.items()
+        )
+        if units_available and consumables_available:
             available_establishment_ids.append(establishment.pk)
 
     return establishments.filter(pk__in=available_establishment_ids)
@@ -148,7 +173,11 @@ def _confirm_reservation(*, organization, quotation, establishment):
     try:
         locked_quotation = (
             Quotation.objects.select_for_update()
-            .prefetch_related("items__tool_model")
+            .prefetch_related(
+                "items__tool_model",
+                "items__offerings__offering",
+                "items__offerings__inventory_tool_model",
+            )
             .get(pk=quotation.pk, organization=organization)
         )
     except Quotation.DoesNotExist as error:
@@ -190,6 +219,24 @@ def _confirm_reservation(*, organization, quotation, establishment):
             )
         already_selected.update(unit.pk for unit in selected)
         selected_by_item.append((item, selected))
+        for option in item.offerings.all():
+            if not option.inventory_tool_model_id:
+                continue
+            candidates = _locked_available_units(
+                organization=organization,
+                establishment=locked_establishment,
+                tool_model=option.inventory_tool_model,
+                starts_at=locked_quotation.starts_at,
+                ends_at=locked_quotation.ends_at,
+            ).exclude(pk__in=already_selected)
+            selected = list(candidates[: option.quantity])
+            if len(selected) != option.quantity:
+                raise ReservationUnavailable(
+                    f"Não há {option.quantity} unidade(s) disponível(is) de "
+                    f"{option.offering_name}."
+                )
+            already_selected.update(unit.pk for unit in selected)
+            selected_by_item.append((item, selected, option))
 
     confirmed_at = timezone.now()
     reservation = Reservation(
@@ -203,13 +250,45 @@ def _confirm_reservation(*, organization, quotation, establishment):
     )
     reservation.save()
 
+    for item in items:
+        for option in item.offerings.all():
+            if option.kind == Offering.Kind.CONSUMABLE:
+                try:
+                    stock = OfferingStock.objects.select_for_update().get(
+                        organization=organization,
+                        establishment=locked_establishment,
+                        offering=option.offering,
+                    )
+                except OfferingStock.DoesNotExist as error:
+                    raise ReservationUnavailable(
+                        f"Não existe estoque de {option.offering_name} neste estabelecimento."
+                    ) from error
+                if stock.available_quantity < option.quantity:
+                    raise ReservationUnavailable(
+                        f"O saldo de {option.offering_name} ficou insuficiente."
+                    )
+                stock.reserved_quantity += option.quantity
+                stock.save(update_fields=["reserved_quantity", "updated_at"])
+            ReservationOffering.objects.create(
+                organization=organization,
+                reservation=reservation,
+                quotation_item_offering=option,
+                offering_name=option.offering_name,
+                kind=option.kind,
+                quantity=option.quantity,
+                reserved_at=confirmed_at,
+            )
+
     allocations = []
-    for item, selected in selected_by_item:
+    for selected_group in selected_by_item:
+        item, selected, *option_group = selected_group
+        option = option_group[0] if option_group else None
         for unit in selected:
             allocation = ReservationAllocation(
                 organization=organization,
                 reservation=reservation,
                 quotation_item=item,
+                quotation_item_offering=option,
                 tool_unit=unit,
                 starts_at=reservation.starts_at,
                 ends_at=reservation.ends_at,
@@ -259,4 +338,21 @@ def cancel_reservation(*, organization, reservation):
             released_at=cancelled_at,
             updated_at=cancelled_at,
         )
+        consumables = locked.offerings.select_for_update().filter(
+            kind=Offering.Kind.CONSUMABLE,
+            consumed_at__isnull=True,
+            released_at__isnull=True,
+        )
+        for reserved in consumables:
+            stock = OfferingStock.objects.select_for_update().get(
+                organization=organization,
+                establishment=locked.establishment,
+                offering=reserved.quotation_item_offering.offering,
+            )
+            if stock.reserved_quantity < reserved.quantity:
+                raise ValidationError("O saldo reservado de consumível está inconsistente.")
+            stock.reserved_quantity -= reserved.quantity
+            stock.save(update_fields=["reserved_quantity", "updated_at"])
+            reserved.released_at = cancelled_at
+            reserved.save(update_fields=["released_at", "updated_at"])
         return locked
