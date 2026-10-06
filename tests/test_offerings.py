@@ -472,6 +472,73 @@ def test_operational_create_view_persists_catalog_price_and_compatibility(client
     assert offering.compatibilities.get().tool_model == domain["base_model"]
     assert offering.pricing_policies.get().flat_amount == Decimal("35.00")
 
+
+@pytest.mark.django_db
+def test_create_returnable_ignores_stale_period_and_consumable_fields(client):
+    domain = create_domain()
+    client.force_login(create_user(domain["organization"]))
+
+    response = client.post(
+        reverse("offerings:create"),
+        {
+            "name": "Placa de vídeo dedicada",
+            "kind": Offering.Kind.RETURNABLE_ACCESSORY,
+            "description": "GPU instalada e devolvida com o computador.",
+            "inventory_tool_model": str(domain["accessory_model"].pk),
+            "active": "on",
+            "compatible_models": [str(domain["base_model"].pk)],
+            "max_quantity_per_equipment": "1",
+            "billing_method": OfferingPricingPolicy.BillingMethod.FLAT,
+            "effective_from": "2026-01-01",
+            "flat_amount": "120.00",
+            "hourly_rate": "9.00",
+            "daily_rate": "",
+            "monthly_rate": "",
+            "stock_establishment": str(domain["establishment"].pk),
+            "on_hand_quantity": "2",
+        },
+    )
+
+    assert response.status_code == 302
+    offering = Offering.objects.get(name="Placa de vídeo dedicada")
+    policy = offering.pricing_policies.get()
+    assert offering.inventory_tool_model == domain["accessory_model"]
+    assert policy.flat_amount == Decimal("120.00")
+    assert policy.hourly_rate is None
+    assert not offering.stocks.exists()
+
+
+@pytest.mark.django_db
+def test_create_period_price_ignores_stale_flat_amount(client):
+    domain = create_domain()
+    client.force_login(create_user(domain["organization"]))
+
+    response = client.post(
+        reverse("offerings:create"),
+        {
+            "name": "Suporte por hora",
+            "kind": Offering.Kind.SERVICE,
+            "description": "Suporte técnico durante a locação.",
+            "active": "on",
+            "compatible_models": [str(domain["base_model"].pk)],
+            "max_quantity_per_equipment": "1",
+            "billing_method": OfferingPricingPolicy.BillingMethod.PER_PERIOD,
+            "effective_from": "2026-01-01",
+            "flat_amount": "50.00",
+            "hourly_rate": "8.00",
+            "daily_rate": "",
+            "monthly_rate": "",
+            "stock_establishment": "",
+            "on_hand_quantity": "",
+        },
+    )
+
+    assert response.status_code == 302
+    policy = Offering.objects.get(name="Suporte por hora").pricing_policies.get()
+    assert policy.flat_amount is None
+    assert policy.hourly_rate == Decimal("8.00")
+
+
 @pytest.mark.django_db
 def test_offering_model_rejects_invalid_inventory_and_cross_tenant_stock():
     domain = create_domain()

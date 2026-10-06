@@ -157,6 +157,13 @@ Quando a opção for física, cadastre primeiro seu modelo e suas unidades em
 6. para consumível, informe estabelecimento e estoque inicial;
 7. salve.
 
+O formulário mostra somente os campos compatíveis com a categoria e com a forma de
+cobrança escolhidas. **Estabelecimento do estoque** e **quantidade inicial** pertencem
+somente aos consumíveis. Para uma placa de vídeo retornável, por exemplo, escolha o
+modelo físico da placa: a Matriz ou filial já vem cadastrada em cada unidade na tela de
+Ferramentas. Valores preenchidos em uma modalidade anterior são descartados quando a
+forma de cobrança muda.
+
 Compatibilidade é explícita: uma bateria de furadeira não aparece automaticamente em
 uma serra. Na cobrança por período, a opção acompanha a unidade e a quantidade cobrada
 do item principal. Remoções usam o mesmo cálculo como desconto, mas nunca podem tornar

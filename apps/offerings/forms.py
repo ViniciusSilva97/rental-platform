@@ -69,6 +69,11 @@ class OfferingForm(forms.ModelForm):
         models = ToolModel.objects.filter(organization=organization, active=True)
         self.fields["compatible_models"].queryset = models
         self.fields["inventory_tool_model"].queryset = models
+        self.fields["inventory_tool_model"].label = "Modelo físico do adicional"
+        self.fields["inventory_tool_model"].help_text = (
+            "Para configurações e acessórios retornáveis, selecione o modelo cujas "
+            "unidades físicas serão reservadas. O estabelecimento vem de cada unidade."
+        )
         self.fields["stock_establishment"].queryset = Establishment.objects.filter(
             organization=organization, active=True
         )
@@ -83,23 +88,28 @@ class OfferingForm(forms.ModelForm):
             cleaned.get("monthly_rate"),
         )
         if method == OfferingPricingPolicy.BillingMethod.FLAT:
+            cleaned["hourly_rate"] = None
+            cleaned["daily_rate"] = None
+            cleaned["monthly_rate"] = None
             if flat is None:
                 self.add_error("flat_amount", "Informe o valor único.")
-            if any(rate is not None for rate in rates):
-                self.add_error("hourly_rate", "Não informe tarifas por período.")
         elif method:
-            if flat is not None:
-                self.add_error("flat_amount", "Não informe valor único nesta modalidade.")
+            cleaned["flat_amount"] = None
             if all(rate is None for rate in rates):
                 self.add_error("hourly_rate", "Informe ao menos uma tarifa por período.")
 
-        is_consumable = cleaned.get("kind") == Offering.Kind.CONSUMABLE
+        kind = cleaned.get("kind")
+        if kind in {Offering.Kind.CONSUMABLE, Offering.Kind.SERVICE, Offering.Kind.REMOVAL}:
+            cleaned["inventory_tool_model"] = None
+
+        is_consumable = kind == Offering.Kind.CONSUMABLE
         establishment = cleaned.get("stock_establishment")
         quantity = cleaned.get("on_hand_quantity")
         if is_consumable and (establishment is None or quantity is None):
             self.add_error("stock_establishment", "Informe estabelecimento e estoque inicial.")
-        if not is_consumable and (establishment is not None or quantity is not None):
-            self.add_error("stock_establishment", "Somente consumíveis usam saldo quantitativo.")
+        if not is_consumable:
+            cleaned["stock_establishment"] = None
+            cleaned["on_hand_quantity"] = None
         return cleaned
 
     @transaction.atomic
