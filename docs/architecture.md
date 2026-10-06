@@ -16,6 +16,7 @@ flowchart TD
     APP --> CUS["customers"]
     APP --> PRI["pricing"]
     APP --> AST["assets"]
+    APP --> OFF["offerings"]
     APP --> QUO["quotations"]
     APP --> RES["reservations"]
     APP --> CON["contracts"]
@@ -25,6 +26,7 @@ flowchart TD
     CUS --> DB
     PRI --> DB
     AST --> DB
+    OFF --> DB
     QUO --> DB
     RES --> DB
     CON --> DB
@@ -40,6 +42,7 @@ flowchart TD
 | `customers` | pessoas físicas/jurídicas, contatos e endereços | reservas e contratos |
 | `pricing` | versões e cálculo elementar de preços | disponibilidade, descontos e contratos |
 | `assets` | dados patrimoniais vinculados à unidade física | depreciação e contabilidade |
+| `offerings` | configurações, compatibilidade, preço e saldo consumível | texto livre, inspeção e cobrança |
 | `quotations` | períodos, itens, snapshots e estados | estoque, reservas e contratos |
 | `reservations` | disponibilidade temporal e alocação física | contratos, retirada e devolução |
 | `contracts` | contrato, retirada, devolução e condição observada | preço, cobrança e pagamentos |
@@ -60,6 +63,8 @@ para o catálogo ou disponibilidade para preços.
 de um estabelecimento. Ele não recalcula preços e não transforma reserva em contrato.
 `contracts` consome uma reserva confirmada e preserva os dados necessários para operar
 retirada e devolução. Ele não recalcula o orçamento nem decide disponibilidade.
+`offerings` define opções estruturadas reutilizadas por orçamento, reserva e contrato;
+o módulo não interpreta observações livres nem decide avarias.
 
 ## Isolamento por organização
 
@@ -100,6 +105,22 @@ Invariantes já implementadas:
 - cada equipamento alocado aparece no máximo uma vez no contrato;
 - retirada e devolução registram usuário e horário por unidade física;
 - devolução integral conclui o contrato, enquanto devolução parcial o mantém ativo.
+- adicional, compatibilidade, preço e estoque nunca atravessam organizações;
+- acessórios físicos compartilham a agenda de `ToolUnit` e consumíveis usam saldo
+  bloqueado por estabelecimento;
+- seleções estruturadas permanecem imutáveis após o envio do orçamento.
+
+### Adicionais configuráveis
+
+`Offering` separa cinco categorias: configuração, acessório retornável, consumível,
+serviço e remoção com desconto. `OfferingCompatibility` restringe modelos e quantidade;
+`OfferingPricingPolicy` versiona valor único ou por período; `OfferingStock` controla
+saldo físico e reservado de consumíveis por estabelecimento.
+
+O orçamento guarda `QuotationItemOffering` como memória de cálculo. Na confirmação,
+opções físicas recebem alocações e consumíveis são reservados com bloqueio de linha.
+`ReservationOffering` preserva o compromisso; `ContractOffering` preserva a contratação.
+Na retirada, consumíveis são baixados e unidades retornáveis passam para `RENTED`.
 
 ### Contexto operacional ativo
 

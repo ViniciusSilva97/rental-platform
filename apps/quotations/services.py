@@ -144,6 +144,7 @@ def save_draft_quotation(
     starts_at: datetime,
     ends_at: datetime,
     lines: tuple[QuotationLineInput, ...],
+    rental_notes: str = "",
     quotation: Quotation | None = None,
 ) -> Quotation:
     """Create or replace a draft and atomically persist reproducible price snapshots."""
@@ -189,7 +190,17 @@ def save_draft_quotation(
         scoped_quotation.starts_at = normalized_start
         scoped_quotation.ends_at = normalized_end
 
+    preserved_offerings = {}
+    if scoped_quotation.pk:
+        for old_item in scoped_quotation.items.prefetch_related("offerings__offering"):
+            key = (old_item.tool_model_id, old_item.billing_unit)
+            preserved_offerings[key] = tuple(
+                (selection.offering, selection.quantity)
+                for selection in old_item.offerings.all()
+            )
+
     scoped_quotation.total_amount = Decimal("0.00")
+    scoped_quotation.rental_notes = (rental_notes or "").strip()
     scoped_quotation.save()
 
     effective_date = timezone.localtime(normalized_start).date()
@@ -279,10 +290,30 @@ def save_draft_quotation(
             "customer",
             "starts_at",
             "ends_at",
+            "rental_notes",
             "total_amount",
             "updated_at",
         ]
     )
+
+    if preserved_offerings:
+        from apps.offerings.services import (
+            OfferingSelectionInput,
+            save_quotation_item_offerings,
+        )
+
+        for item in scoped_quotation.items.all():
+            selections = preserved_offerings.get((item.tool_model_id, item.billing_unit))
+            if selections:
+                save_quotation_item_offerings(
+                    organization=organization,
+                    quotation_item=item,
+                    selections=tuple(
+                        OfferingSelectionInput(offering=offering, quantity=quantity)
+                        for offering, quantity in selections
+                    ),
+                )
+        scoped_quotation.refresh_from_db()
     return scoped_quotation
 
 
@@ -311,6 +342,7 @@ def recalculate_draft_quotation(*, organization, quotation: Quotation) -> Quotat
         customer=scoped_quotation.customer,
         starts_at=scoped_quotation.starts_at,
         ends_at=scoped_quotation.ends_at,
+        rental_notes=scoped_quotation.rental_notes,
         lines=lines,
         quotation=scoped_quotation,
     )

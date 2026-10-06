@@ -12,17 +12,27 @@
 
 <h2>Equipamentos alocados</h2>
 <table>
-    <thead><tr><th>Código</th><th>Ferramenta</th><th>Estado do bloqueio</th></tr></thead>
+    <thead><tr><th>Código</th><th>Ferramenta</th><th>Origem</th><th>Estado do bloqueio</th></tr></thead>
     <tbody>
         {% for allocation in reservation.allocations.all %}
             <tr>
                 <td>{{ allocation.tool_unit.asset_code }}</td>
                 <td>{{ allocation.tool_unit.tool_model }}</td>
+                <td>{% if allocation.quotation_item_offering %}Adicional: {{ allocation.quotation_item_offering.offering_name }}{% else %}Produto principal{% endif %}</td>
                 <td>{% if allocation.released_at %}Liberado em {{ allocation.released_at|date:"d/m/Y H:i" }}{% else %}Período bloqueado{% endif %}</td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
+
+{% if reservation.offerings.all %}
+<h2>Adicionais contratados</h2>
+<ul>
+    {% for option in reservation.offerings.all %}
+        <li>{{ option.offering_name }} — {{ option.quantity }} unidade(s) — {{ option.kind_label }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
 {% if reservation.status == "CONFIRMED" %}
     {% if contract %}

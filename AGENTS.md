@@ -57,6 +57,15 @@ Descobertas fora do escopo devem virar uma nova Issue.
 - A retirada altera a condição física para `RENTED`; a devolução registra a condição
   observada e libera a alocação sem apagar o histórico.
 - Reserva com contrato não pode ser cancelada.
+- Adicionais são capacidades estruturadas; observações livres nunca alteram preço,
+  disponibilidade, estoque ou obrigação de devolução.
+- Compatibilidades e quantidades máximas são explícitas por modelo principal.
+- Acessórios retornáveis e configurações físicas reservam `ToolUnit` identificada.
+- Consumíveis reservam saldo na confirmação, são baixados na retirada e liberados no
+  cancelamento; toda movimentação usa bloqueio transacional.
+- Seleções de adicionais são snapshots imutáveis após o envio do orçamento e seguem
+  para reserva e contrato.
+- Remoções são descontos predefinidos e nunca podem tornar o orçamento negativo.
 - PostgreSQL impede sobreposição por equipamento; SQLite depende do serviço e não
   substitui a validação concorrente da CI.
 - Toda unidade física (`ToolUnit`) deve carregar também `establishment`.

@@ -69,10 +69,12 @@ def contract_detail(request, contract_id):
                 "items",
                 queryset=ContractItem.objects.select_related(
                     "tool_unit",
+                    "contract_offering",
                     "checked_out_by",
                     "returned_by",
                 ),
-            )
+            ),
+            "offerings",
         ),
         pk=contract_id,
         organization=organization,

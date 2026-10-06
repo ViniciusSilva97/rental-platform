@@ -23,6 +23,12 @@ class QuotationForm(forms.Form):
         widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
         input_formats=["%Y-%m-%dT%H:%M"],
     )
+    rental_notes = forms.CharField(
+        label="Observações da locação",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text="Não altera automaticamente preço, estoque ou disponibilidade.",
+    )
 
     def __init__(self, *args, organization, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,6 +88,7 @@ def quotation_initial(quotation):
         "customer": quotation.customer,
         "starts_at": timezone.localtime(quotation.starts_at).strftime("%Y-%m-%dT%H:%M"),
         "ends_at": timezone.localtime(quotation.ends_at).strftime("%Y-%m-%dT%H:%M"),
+        "rental_notes": quotation.rental_notes,
     }
 
 

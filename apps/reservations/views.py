@@ -120,6 +120,8 @@ def reservation_detail(request, reservation_id):
         ).prefetch_related(
             "allocations__tool_unit__tool_model",
             "allocations__quotation_item",
+            "allocations__quotation_item_offering",
+            "offerings__quotation_item_offering",
         ),
         pk=reservation_id,
         organization=organization,

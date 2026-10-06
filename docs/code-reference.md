@@ -11,17 +11,23 @@ documento, período e valor total como snapshots e evolui por `PREPARED`, `ACTIV
 ### `apps.contracts.models.ContractItem`
 
 Relaciona cada alocação física ao contrato e registra código e nome como snapshots,
-retirada, devolução, usuários responsáveis, condição observada e notas.
+retirada, devolução, usuários responsáveis, condição observada e notas. Opções físicas
+apontam também para o `ContractOffering` correspondente.
+
+### `apps.contracts.models.ContractOffering`
+
+Preserva configurações, acessórios, consumíveis, serviços e remoções vindos da reserva,
+incluindo quantidade, efeito financeiro, total e necessidade de preparação.
 
 ### `apps.contracts.services.create_contract()`
 
-Bloqueia a reserva, valida tenant e estado, cria um único contrato e materializa um item
+Bloqueia a reserva, valida tenant e estado, copia os adicionais e materializa um item
 para cada equipamento alocado.
 
 ### `apps.contracts.services.check_out_contract()`
 
-Registra a retirada de todas as unidades em uma transação e muda sua condição física
-para `RENTED`.
+Registra a retirada de todas as unidades, baixa consumíveis reservados e muda unidades
+físicas para `RENTED` em uma única transação.
 
 ### `apps.contracts.services.return_contract_item()`
 
@@ -341,6 +347,34 @@ qualquer fração iniciada vira uma unidade inteira; com `PROPORTIONAL`, a fraç
 preservada. As funções rejeitam `float`, quantidade não positiva e unidade desconhecida.
 Converter datas reais em horas, dias ou meses pertence ao módulo de orçamentos.
 
+## `offerings`
+
+### Modelos
+
+| Modelo | Responsabilidade |
+|---|---|
+| `Offering` | categoria, nome, modelo físico opcional e preparação |
+| `OfferingCompatibility` | modelos principais aceitos e quantidade máxima |
+| `OfferingPricingPolicy` | preço versionado único ou por hora, dia e mês |
+| `OfferingStock` | saldo físico e reservado de consumível por estabelecimento |
+
+Acessórios retornáveis exigem `inventory_tool_model`; consumíveis, serviços e remoções
+proíbem esse vínculo. Configurações podem usá-lo quando houver uma unidade patrimonial.
+Todos os relacionamentos validam a organização.
+
+### Serviços e telas
+
+| Elemento | Contrato |
+|---|---|
+| `OfferingSelectionInput` | opção e quantidade positiva |
+| `select_effective_offering_policy(...)` | seleciona a versão vigente mais recente |
+| `save_quotation_item_offerings(...)` | valida compatibilidade, cria snapshots e recalcula o total atomicamente |
+| `OfferingForm` | cadastra opção, preço, compatibilidade e estoque inicial |
+| `quotation_item_offerings()` | altera somente opções de um item em rascunho |
+
+As telas ficam em `/app/adicionais/`. Observações livres nunca são interpretadas como
+preço, estoque ou regra de devolução.
+
 ## `quotations`
 
 ### `Quotation`
@@ -351,6 +385,7 @@ Representa o cabeçalho e o ciclo de vida comercial de um orçamento.
 |---|---|
 | `organization` | tenant explícito e obrigatório |
 | `customer` | cliente protegido contra exclusão enquanto referenciado |
+| `rental_notes` | texto livre sem efeito automático no domínio |
 | `starts_at`, `ends_at` | intervalo `[início, fim)`, com duração positiva |
 | `status` | `DRAFT`, `SENT`, `EXPIRED` ou `CANCELLED` |
 | `total_amount` | soma decimal dos snapshots dos itens |
@@ -383,6 +418,12 @@ O item repete `organization_id` para permitir escopo direto. `clean()` confirma 
 modelo e política; constraints exigem quantidades positivas, valores não negativos e
 uma única linha por orçamento, modelo e unidade de cobrança.
 
+### `QuotationItemOffering`
+
+Preserva nome, categoria, acréscimo/desconto, quantidade, regra, tarifa, total, vigência,
+modelo físico e preparação. Só pode ser recriado enquanto o orçamento estiver em
+rascunho; remoções não podem produzir total negativo.
+
 ### Serviços de orçamento
 
 | Elemento | Contrato |
@@ -405,9 +446,9 @@ Transições permitidas:
 - `SENT → EXPIRED` ou `SENT → CANCELLED`;
 - `EXPIRED` e `CANCELLED` são terminais neste incremento.
 
-`DRAFT → SENT` só ocorre quando um estabelecimento ativo pode atender, sozinho, todas
-as quantidades no período. Essa validação consulta a agenda, mas não bloqueia unidades;
-a alocação concorrente definitiva pertence à confirmação da reserva.
+`DRAFT → SENT` só ocorre quando um estabelecimento ativo pode atender produtos-base,
+opções físicas e consumíveis. Essa consulta não bloqueia recursos; a alocação concorrente
+definitiva pertence à confirmação da reserva.
 
 ### Formulários e views operacionais
 
@@ -419,6 +460,7 @@ a alocação concorrente definitiva pertence à confirmação da reserva.
 | `quotation_list()` | lista somente orçamentos da organização ativa |
 | `quotation_create()` / `quotation_edit()` | criam ou substituem apenas rascunhos |
 | `quotation_detail()` | apresenta snapshots e memória de cálculo |
+| `quotation_item_offerings()` | configura opções estruturadas do item |
 | `quotation_recalculate()` | atualiza preços somente enquanto rascunho |
 | `quotation_transition()` | executa ações POST explícitas de estado |
 
@@ -453,6 +495,7 @@ Registra qual unidade física atende qual item do orçamento durante o período 
 |---|---|
 | `reservation` | cabeçalho confirmado |
 | `quotation_item` | item que solicitou o modelo e a quantidade |
+| `quotation_item_offering` | identifica a opção quando a unidade é adicional |
 | `tool_unit` | equipamento físico específico alocado |
 | `starts_at`, `ends_at` | período repetido para consulta e constraint direta |
 | `released_at` | nulo enquanto bloqueia; preenchido no cancelamento |
@@ -463,16 +506,21 @@ Registra qual unidade física atende qual item do orçamento durante o período 
 PostgreSQL, `prevent_overlapping_active_reservations` exclui sobreposições da mesma
 unidade usando GiST e `TSTZRANGE(..., '[)')`; a condição ignora alocações liberadas.
 
+### `ReservationOffering`
+
+Preserva a opção confirmada. Consumíveis recebem `consumed_at` na retirada ou
+`released_at` no cancelamento, nunca ambos; demais categorias permanecem como histórico.
+
 ### Serviços de disponibilidade e reserva
 
 | Elemento | Contrato |
 |---|---|
 | `ReservationUnavailable` | conflito ou quantidade insuficiente com mensagem operacional |
 | `available_units(...)` | filtra tenant, estabelecimento, modelo, estado e sobreposição |
-| `available_establishments_for_quotation(...)` | encontra filiais que atendem o orçamento completo |
+| `available_establishments_for_quotation(...)` | atende base, opções físicas e consumíveis |
 | `units_with_reservation_schedule(...)` | anexa reserva atual e próxima em duas consultas isoladas por tenant |
-| `confirm_reservation(...)` | bloqueia, seleciona unidades e grava tudo atomicamente |
-| `cancel_reservation(...)` | aplica `CONFIRMED → CANCELLED` e libera alocações |
+| `confirm_reservation(...)` | seleciona unidades, reserva consumíveis e grava tudo atomicamente |
+| `cancel_reservation(...)` | libera alocações e saldo reservado sem apagar histórico |
 
 Disponibilidade considera somente `ToolUnit.status == AVAILABLE`. A confirmação não
 muda esse campo, pois a agenda permite períodos futuros não sobrepostos. Uma violação

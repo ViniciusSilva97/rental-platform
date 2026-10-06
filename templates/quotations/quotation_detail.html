@@ -26,12 +26,27 @@
                     {% if item.period_quantity != item.billed_quantity %}
                         <span class="helptext">Período exato: {{ item.period_quantity.normalize }} {{ item.get_billing_unit_display|lower }}(s).</span>
                     {% endif %}
+                    {% for option in item.offerings.all %}
+                        <span class="helptext">
+                            {{ option.get_price_effect_display }}: {{ option.offering_name }} ×
+                            {{ option.quantity }} — R$ {{ option.line_total|floatformat:2 }}
+                        </span>
+                    {% endfor %}
+                    {% if quotation.status == "DRAFT" %}
+                        <a href="{% url 'offerings:quotation-item' quotation.pk item.pk %}">Configurar adicionais</a>
+                    {% endif %}
                 </td>
                 <td>{{ item.policy_effective_from|date:"d/m/Y" }}</td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
+
+{% if quotation.rental_notes %}
+    <h2>Observações da locação</h2>
+    <p>{{ quotation.rental_notes|linebreaksbr }}</p>
+    <p class="muted">Texto livre sem efeito automático em preço ou estoque.</p>
+{% endif %}
 
 <p class="quotation-total"><strong>Total: R$ {{ quotation.total_amount|floatformat:2 }}</strong></p>
 

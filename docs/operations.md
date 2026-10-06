@@ -82,6 +82,7 @@ O alias `/health/` evita quebrar consumidores da primeira versão.
 - `/app/selecionar-locadora/`: escolha para usuários com múltiplos vínculos;
 - `/app/ferramentas/`: equipamentos da locadora ativa;
 - `/app/ferramentas/cadastrar/`: cadastro assistido em lote;
+- `/app/adicionais/`: catálogo de configurações, acessórios, consumíveis e serviços;
 - `/app/orcamentos/`: lista de orçamentos da locadora ativa;
 - `/app/orcamentos/novo/`: criação assistida com um ou mais modelos;
 - `/app/reservas/`: reservas confirmadas da locadora ativa;
@@ -193,6 +194,23 @@ organização.
 Teste também acesso por outra organização, retirada repetida, devolução repetida e
 condição **Perdida**. Nenhum desses caminhos pode criar movimentação parcial ou cruzar
 dados entre locadoras.
+
+## Roteiro funcional de adicionais
+
+1. cadastre um modelo principal e outro modelo físico para um acessório retornável;
+2. abra **Adicionais** e cadastre o acessório com compatibilidade e preço;
+3. cadastre um consumível com saldo no estabelecimento;
+4. cadastre um serviço e uma remoção autorizada com desconto;
+5. crie o orçamento principal e salve o rascunho;
+6. use **Configurar adicionais** em cada item e informe as quantidades totais;
+7. confira acréscimos, descontos e observações livres separadamente;
+8. envie e confirme a reserva;
+9. confirme que acessórios possuem códigos físicos e o consumível ficou reservado;
+10. prepare o contrato e registre a retirada;
+11. confirme a baixa do consumível e a obrigação de devolver o acessório.
+
+Repita com estoque insuficiente, modelo incompatível e outra organização. A operação
+deve recusar o fluxo inteiro sem reserva parcial ou saldo negativo.
 
 ## Documentação e GitHub Pages
 

@@ -154,6 +154,13 @@ class ContractItem(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="items",
     )
+    contract_offering = models.ForeignKey(
+        "contracts.ContractOffering",
+        on_delete=models.PROTECT,
+        related_name="physical_items",
+        null=True,
+        blank=True,
+    )
     reservation_allocation = models.OneToOneField(
         "reservations.ReservationAllocation",
         on_delete=models.PROTECT,
@@ -244,6 +251,11 @@ class ContractItem(TimeStampedModel):
                 "alocação",
             ),
             ("tool_unit", getattr(self, "tool_unit", None), "equipamento"),
+            (
+                "contract_offering",
+                getattr(self, "contract_offering", None),
+                "adicional do contrato",
+            ),
         )
         if self.organization_id:
             for field, related, label in relationships:
@@ -255,6 +267,11 @@ class ContractItem(TimeStampedModel):
         if self.tool_unit_id and self.reservation_allocation_id:
             if self.reservation_allocation.tool_unit_id != self.tool_unit_id:
                 errors["tool_unit"] = "O equipamento deve ser o mesmo da alocação."
+        if self.contract_offering_id and self.contract_id:
+            if self.contract_offering.contract_id != self.contract_id:
+                errors["contract_offering"] = (
+                    "O adicional físico deve pertencer ao mesmo contrato."
+                )
         if self.checked_out_at and self.returned_at and self.returned_at < self.checked_out_at:
             errors["returned_at"] = "A devolução não pode anteceder a retirada."
         if errors:
@@ -266,3 +283,81 @@ class ContractItem(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.contract.display_code} — {self.asset_code_snapshot}"
+
+
+class ContractOffering(TimeStampedModel):
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="contract_offerings",
+    )
+    contract = models.ForeignKey(
+        Contract, on_delete=models.CASCADE, related_name="offerings"
+    )
+    reservation_offering = models.OneToOneField(
+        "reservations.ReservationOffering",
+        on_delete=models.PROTECT,
+        related_name="contract_offering",
+    )
+    offering_name = models.CharField("nome do adicional", max_length=160)
+    kind = models.CharField("categoria", max_length=16)
+    quantity = models.PositiveIntegerField("quantidade")
+    price_effect = models.CharField("efeito no preço", max_length=8)
+    line_total_snapshot = models.DecimalField(
+        "total do adicional", max_digits=14, decimal_places=2
+    )
+    requires_preparation = models.BooleanField("exige preparação técnica", default=False)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gte=1),
+                name="contract_offering_positive_quantity",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(line_total_snapshot__gte=0),
+                name="contract_offering_non_negative_total",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(price_effect__in=["ADDITION", "DISCOUNT"]),
+                name="contract_offering_valid_effect",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    kind__in=[
+                        "CONFIGURATION",
+                        "RETURNABLE",
+                        "CONSUMABLE",
+                        "SERVICE",
+                        "REMOVAL",
+                    ]
+                ),
+                name="contract_offering_valid_kind",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        for field, related in (
+            ("contract", getattr(self, "contract", None)),
+            ("reservation_offering", getattr(self, "reservation_offering", None)),
+        ):
+            if self.organization_id and related:
+                if related.organization_id != self.organization_id:
+                    errors[field] = "O registro deve pertencer à mesma organização."
+        if self.contract_id and self.reservation_offering_id:
+            if self.reservation_offering.reservation_id != self.contract.reservation_id:
+                errors["reservation_offering"] = (
+                    "O adicional deve pertencer à reserva contratada."
+                )
+            if self.kind != self.reservation_offering.kind:
+                errors["kind"] = "A categoria deve preservar a reserva."
+            if self.quantity != self.reservation_offering.quantity:
+                errors["quantity"] = "A quantidade deve preservar a reserva."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean(validate_unique=False, validate_constraints=False)
+        return super().save(*args, **kwargs)

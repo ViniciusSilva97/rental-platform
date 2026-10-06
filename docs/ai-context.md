@@ -12,6 +12,7 @@ desenvolvimento.
 - `apps/customers`: pessoa física/jurídica, contatos e endereços.
 - `apps/pricing`: políticas versionadas e cálculo elementar de preço.
 - `apps/assets`: perfil patrimonial opcional da unidade física.
+- `apps/offerings`: opções comerciais, compatibilidade, preço e estoque de consumíveis.
 - `apps/quotations`: orçamento, conversão do período, snapshots e estados.
 - `apps/reservations`: disponibilidade, confirmação, alocações físicas e cancelamento.
 - `apps/contracts`: contrato, retirada, devolução e condição observada.
@@ -62,11 +63,18 @@ desenvolvimento.
 36. Devolução pode ser parcial, libera a alocação da unidade e registra sua condição.
 37. Somente a devolução de todas as unidades conclui o contrato.
 38. Reserva com contrato não pode ser cancelada.
+39. Observações livres não alteram preço, estoque ou disponibilidade.
+40. Adicionais exigem compatibilidade explícita e limite por modelo principal.
+41. Acessórios retornáveis exigem unidades físicas e devolução individual.
+42. Consumíveis são reservados na confirmação, baixados na retirada e liberados no
+    cancelamento, sempre de forma atômica.
+43. Opções preservam snapshots no orçamento, na reserva e no contrato.
+44. Remoções são descontos predefinidos e o total do orçamento nunca pode ser negativo.
 
 ## Próxima mudança recomendada
 
-Depois do ciclo contratual básico, evoluir inspeção e avarias em uma Issue separada,
-sem misturar cobrança ou pagamento com a movimentação física.
+Depois das opções configuráveis, evoluir inspeção de saída e retorno em uma Issue
+separada, sem misturar cobrança ou pagamento com a movimentação física.
 
 ## Como propor mudanças
 

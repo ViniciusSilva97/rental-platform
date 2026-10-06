@@ -35,7 +35,11 @@ Em desenvolvimento para a `v0.4.0`:
 - snapshots de cliente, valor e equipamentos contratados;
 - retirada atômica com identificação do usuário responsável;
 - devolução parcial por equipamento e condição observada;
-- conclusão automática após a devolução integral.
+- conclusão automática após a devolução integral;
+- configurações, acessórios retornáveis, consumíveis e serviços compatíveis por modelo;
+- acréscimos e remoções com desconto preservados como snapshots;
+- estoque físico de acessórios e saldo quantitativo de consumíveis;
+- observações do cliente separadas das opções que alteram preço e disponibilidade.
 
 ## Requisitos
 
@@ -114,6 +118,10 @@ unidades de cobrança. O Django seleciona a política vigente no início da loca
 calcula o total e guarda um snapshot reproduzível. Somente rascunhos podem ser editados
 ou recalculados. O envio exige que uma unidade ativa consiga atender integralmente as
 quantidades no período; expirar ou cancelar preserva os valores já registrados.
+
+Em `/app/adicionais/`, a locadora cadastra configurações, acessórios retornáveis,
+consumíveis, serviços e remoções autorizadas. Compatibilidade, preço, estoque e efeito
+financeiro são estruturados; observações livres permanecem sem efeito automático.
 
 Em `/app/reservas/`, a locadora consulta disponibilidade e confirma um orçamento
 enviado em um estabelecimento. O sistema escolhe unidades físicas específicas e

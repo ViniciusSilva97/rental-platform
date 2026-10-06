@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Quotation, QuotationItem
+from .models import Quotation, QuotationItem, QuotationItemOffering
 
 
 class QuotationItemInline(admin.TabularInline):
@@ -21,6 +21,16 @@ class QuotationItemInline(admin.TabularInline):
         "month_definition",
         "fixed_month_days",
     )
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class QuotationItemOfferingInline(admin.TabularInline):
+    model = QuotationItemOffering
+    extra = 0
+    readonly_fields = tuple(field.name for field in QuotationItemOffering._meta.fields)
     can_delete = False
 
     def has_add_permission(self, request, obj=None):
@@ -53,6 +63,19 @@ class QuotationItemAdmin(admin.ModelAdmin):
     )
     list_filter = ("billing_unit", "organization")
     readonly_fields = tuple(field.name for field in QuotationItem._meta.fields)
+    inlines = (QuotationItemOfferingInline,)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(QuotationItemOffering)
+class QuotationItemOfferingAdmin(admin.ModelAdmin):
+    list_display = ("quotation", "offering_name", "kind", "quantity", "line_total")
+    readonly_fields = tuple(field.name for field in QuotationItemOffering._meta.fields)
 
     def has_add_permission(self, request):
         return False

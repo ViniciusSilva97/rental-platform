@@ -1,0 +1,46 @@
+{% extends "app_base.html" %}
+
+{% block title %}Configurar adicionais — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>Configurar adicionais</h1>
+<p><strong>{{ quotation.display_code }}:</strong> {{ item.tool_model }} — {{ item.equipment_quantity }} equipamento(s)</p>
+<p class="muted">As quantidades são totais para esta linha. Somente opções compatíveis aparecem.</p>
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+    {% for form in formset %}
+        <div class="form-row" data-offering-form>
+            {{ form.non_field_errors }}
+            {{ form.offering.as_field_group }}
+            {{ form.quantity.as_field_group }}
+            {{ form.DELETE.as_field_group }}
+        </div>
+    {% endfor %}
+    <template id="empty-offering-form">
+        <div class="form-row" data-offering-form>
+            {{ formset.empty_form.offering.as_field_group }}
+            {{ formset.empty_form.quantity.as_field_group }}
+            {{ formset.empty_form.DELETE.as_field_group }}
+        </div>
+    </template>
+    <button class="button secondary" id="add-offering" type="button">Adicionar opção</button>
+    <button class="button" type="submit">Salvar adicionais</button>
+    <a class="button secondary" href="{% url 'quotations:detail' quotation.pk %}">Voltar</a>
+</form>
+<script>
+(() => {
+    const button = document.querySelector("#add-offering");
+    const template = document.querySelector("#empty-offering-form");
+    const total = document.querySelector("#id_offerings-TOTAL_FORMS");
+    button.addEventListener("click", () => {
+        const index = Number(total.value);
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = template.innerHTML.replaceAll("__prefix__", String(index));
+        template.before(wrapper.firstElementChild);
+        total.value = String(index + 1);
+    });
+})();
+</script>
+{% endblock %}
