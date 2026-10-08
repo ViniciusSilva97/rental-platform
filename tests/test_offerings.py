@@ -14,6 +14,12 @@ from apps.catalog.models import Category, ToolModel, ToolUnit
 from apps.contracts.models import ContractOffering
 from apps.contracts.services import check_out_contract, create_contract
 from apps.customers.models import Customer
+from apps.inspections.models import OutboundInspectionItem
+from apps.inspections.services import (
+    OutboundInspectionItemInput,
+    create_outbound_inspection,
+    save_outbound_inspection,
+)
 from apps.offerings.models import (
     Offering,
     OfferingCompatibility,
@@ -157,6 +163,33 @@ def create_user(organization):
         organization=organization, user=user, role=Membership.Role.OWNER
     )
     return user
+
+
+def complete_outbound_inspection(*, organization, contract, user):
+    inspection, items = create_outbound_inspection(
+        organization=organization,
+        contract=contract,
+        user=user,
+    )
+    return save_outbound_inspection(
+        organization=organization,
+        inspection=inspection,
+        user=user,
+        general_notes="",
+        customer_acknowledged=True,
+        customer_representative_name="Cliente de teste",
+        item_inputs=tuple(
+            OutboundInspectionItemInput(
+                inspection_item=item,
+                condition=OutboundInspectionItem.Condition.GOOD,
+                functional_result=OutboundInspectionItem.FunctionalResult.APPROVED,
+                cleanliness_confirmed=True,
+                safety_confirmed=True,
+            )
+            for item in items
+        ),
+        complete=True,
+    )
 
 
 @pytest.mark.django_db
@@ -350,10 +383,14 @@ def test_reservation_contract_and_checkout_propagate_physical_and_consumable_opt
     assert ContractOffering.objects.filter(contract=contract).count() == 2
     assert sum(item.contract_offering_id is not None for item in items) == 1
 
+    user = create_user(domain["organization"])
+    complete_outbound_inspection(
+        organization=domain["organization"], contract=contract, user=user
+    )
     check_out_contract(
         organization=domain["organization"],
         contract=contract,
-        user=create_user(domain["organization"]),
+        user=user,
     )
     stock.refresh_from_db()
     assert stock.on_hand_quantity == 3

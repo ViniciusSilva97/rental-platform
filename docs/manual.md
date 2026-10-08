@@ -55,6 +55,8 @@ Na raiz do projeto, copie o modelo de ambiente:
 
 O arquivo `.env.docker` é local e não deve ser enviado ao GitHub. Para desenvolvimento,
 revise ao menos a chave do Django, hosts e credenciais do PostgreSQL antes de iniciar.
+O Compose cria também o volume `inspection_media`, que preserva fotos e PDFs das
+inspeções quando o contêiner é reconstruído.
 
 ### Construir, migrar e criar o usuário
 
@@ -171,7 +173,7 @@ o orçamento negativo.
 
 !!! warning "Remoções precisam ser predefinidas"
     Cadastre somente remoções analisadas como técnica e comercialmente seguras. Não use
-    observações livres como desconto. A futura inspeção de saída registrará a composição
+    observações livres como desconto. A inspeção inicial registrará a composição
     efetivamente entregue.
 
 ## 6. Criar um orçamento
@@ -282,10 +284,36 @@ Cada reserva gera no máximo um contrato. O sistema grava snapshots do cliente, 
 equipamentos para que futuras alterações cadastrais não reescrevam esse histórico.
 Depois da criação do contrato, a reserva não pode mais ser cancelada.
 
+### Fazer a inspeção inicial
+
+Antes da retirada, clique em **Iniciar inspeção inicial**. O sistema abre uma
+conferência para cada equipamento físico do contrato, inclusive configurações e
+acessórios retornáveis.
+
+Para cada unidade:
+
+1. selecione a condição externa observada;
+2. execute o teste funcional e marque **Aprovado**;
+3. confirme limpeza e segurança;
+4. descreva componentes, acessórios e eventuais marcas preexistentes;
+5. anexe fotos ou PDF quando a evidência ajudar na comparação futura.
+
+Os anexos aceitam JPG, PNG, WebP e PDF de até 10 MB. Eles ficam protegidos pela
+autenticação e pela locadora ativa; cada arquivo registra autor, horário, tamanho e
+hash SHA-256. Enquanto a inspeção estiver em rascunho, é possível salvar, continuar e
+remover anexos.
+
+Ao final, informe o nome de quem acompanhou a conferência, marque a confirmação do
+cliente e clique em **Concluir inspeção**. A conclusão somente é aceita quando todos os
+itens estiverem aprovados, limpos e seguros. Depois disso, o registro e suas evidências
+ficam imutáveis. Essa confirmação operacional não substitui uma assinatura eletrônica.
+
 ### Registrar a retirada
 
-Na página do contrato, clique em **Confirmar retirada**. Todos os equipamentos são
-movimentados em uma única transação:
+Depois de concluir a inspeção inicial, volte à página do contrato e clique em
+**Confirmar retirada**. Sem essa conferência, o botão não é liberado e o serviço também
+recusa tentativas diretas. Todos os equipamentos são movimentados em uma única
+transação:
 
 - o contrato passa de **Preparado** para **Em andamento**;
 - cada item registra data, hora e usuário responsável;
@@ -334,7 +362,7 @@ alocações permanecem no histórico, com o instante em que foram liberadas.
 
 | Situação | Significado |
 |---|---|
-| Preparado | aguarda conferência e retirada integral |
+| Preparado | aguarda inspeção inicial e retirada integral |
 | Em andamento | equipamentos retirados; aceita devoluções parciais |
 | Concluído | todas as unidades foram devolvidas |
 
@@ -390,6 +418,18 @@ respeita a quantidade máxima configurada.
 
 Cancele primeiro a reserva confirmada. Depois, cancele ou expire o orçamento.
 
+### O botão de retirada não aparece
+
+Abra o contrato e conclua a inspeção inicial. Todos os equipamentos precisam ter
+condição informada, teste funcional aprovado e conferências de limpeza e segurança.
+Informe também o nome de quem acompanhou e confirme o acompanhamento do cliente.
+
+### Uma evidência não foi aceita
+
+Use JPG, PNG, WebP ou PDF de até 10 MB. Renomear um arquivo de outro formato não basta:
+o sistema compara o conteúdo real com o tipo informado. Anexos só podem ser incluídos
+ou removidos enquanto a inspeção estiver em rascunho.
+
 ## Segurança e limites
 
 - mantenha `.env.docker` e chaves fora do Git;
@@ -400,8 +440,10 @@ Cancele primeiro a reserva confirmada. Depois, cancele ou expire o orçamento.
 - não trate orçamento como contrato ou pagamento.
 - não use observações para substituir opções com efeito financeiro ou de estoque;
 - cadastre remoções somente após validar a configuração mínima funcional.
+- não compartilhe links de evidência como se fossem públicos; o acesso exige login e
+  a organização correta.
 
-Inspeções detalhadas antes e depois da locação, evidências, cobrança, pagamentos,
+A inspeção de retorno, comparação automática das evidências, cobrança, pagamentos,
 assinatura eletrônica, renovação e cálculo automático de avarias ainda não fazem parte
 deste incremento. A interface tradicional continuará sendo a fonte operacional mesmo
 quando um assistente de IA for adicionado futuramente.

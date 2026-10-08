@@ -14,6 +14,7 @@
 | `DJANGO_SECURE_HSTS_SECONDS` | não aplicado | 3600 por padrão |
 | `DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS` | não aplicado | falso até todos os subdomínios estarem prontos |
 | `DJANGO_SECURE_HSTS_PRELOAD` | não aplicado | falso até decisão operacional |
+| `DJANGO_MEDIA_ROOT` | padrão `media/` na raiz do projeto | caminho privado e persistente |
 
 Não armazene arquivos `.env` no Git. Os exemplos versionados não contêm segredos.
 
@@ -38,6 +39,10 @@ Fluxo de inicialização:
 2. `web` inicia o servidor de desenvolvimento;
 3. o healthcheck de `web` consulta `/health/ready/`.
 
+O volume nomeado `inspection_media` é montado em `/app/media`. Ele preserva fotos e
+PDFs de inspeção durante reconstruções do contêiner e evita que esses arquivos sejam
+gravados no bind mount do código.
+
 Migrations continuam sendo uma ação explícita:
 
 ```bash
@@ -60,9 +65,10 @@ O `Dockerfile`:
 Workers e threads são um ponto de partida econômico, não um valor universal. Ajuste-os
 com métricas de memória, latência e CPU da hospedagem real.
 
-WhiteNoise entrega arquivos estáticos da própria aplicação. Uploads futuros de fotos,
-documentos e contratos devem usar armazenamento de objetos persistente; o filesystem
-do contêiner é descartável.
+WhiteNoise entrega apenas arquivos estáticos da própria aplicação. Evidências de
+inspeção nunca são publicadas por WhiteNoise: o download passa por uma rota autenticada.
+O volume local atende desenvolvimento; produção deve usar filesystem privado
+persistente ou armazenamento de objetos compatível com o backend de storage do Django.
 
 ## Saúde
 
@@ -88,6 +94,7 @@ O alias `/health/` evita quebrar consumidores da primeira versão.
 - `/app/reservas/`: reservas confirmadas da locadora ativa;
 - `/app/reservas/disponibilidade/`: consulta por filial, modelo e período;
 - `/app/contratos/`: contratos, retiradas e devoluções da locadora ativa;
+- `/app/inspecoes/iniciais/<uuid>/`: conferência inicial acessada pelo contrato;
 - `/admin/`: administração técnica, não destinada à operação normal.
 
 Ainda não há cadastro público. Crie o primeiro usuário com `createsuperuser` ou pelo
@@ -113,8 +120,9 @@ Os testes atuais cobrem CPF, CNPJ, CEP, clientes, endereços, políticas e cálc
 preço, perfis patrimoniais, onboarding transacional, sessão adulterada, seleção de
 locadora, cadastro assistido, rollback de lote, concorrência de códigos, orçamentos,
 conversões de hora/dia/mês, snapshots, estados comerciais, disponibilidade,
-alocações físicas, cancelamento, exclusão temporal e concorrência de reservas, vínculos
-inativos, invariantes multi-tenant, valores monetários, estados
+alocações físicas, cancelamento, exclusão temporal e concorrência de reservas, inspeção
+inicial, evidências privadas, bloqueio da retirada, vínculos inativos, invariantes
+multi-tenant, valores monetários, estados
 iniciais e endpoints operacionais. Os fluxos inline com pai ainda não salvo também são
 exercitados. As migrations de estabelecimento e de conversão da diária legada são
 testadas sobre estados anteriores ao release.
@@ -126,6 +134,8 @@ de linha real, e a CI executa obrigatoriamente com PostgreSQL 17.
 Os testes de exclusão e confirmação simultânea de reservas também exigem PostgreSQL.
 A migration habilita `btree_gist` e cria a constraint temporal somente nesse banco;
 SQLite valida o fluxo funcional, mas não deve ser usado como evidência de concorrência.
+Da mesma forma, a CI confirma que duas tentativas simultâneas de iniciar a inspeção do
+mesmo contrato resultam em um único registro.
 
 ## Roteiro funcional de orçamento
 
@@ -183,13 +193,17 @@ organização.
 1. confirme uma reserva com dois equipamentos;
 2. abra a reserva e clique em **Preparar contrato**;
 3. confira snapshots, estabelecimento, período, valor e códigos físicos;
-4. confirme a retirada e verifique que todas as unidades ficaram **Alugadas**;
-5. devolva somente a primeira como **Em manutenção** e registre uma observação;
-6. confirme que o contrato continua **Em andamento** e a segunda unidade, **Alugada**;
-7. devolva a segunda como **Apta para locação**;
-8. confirme que o contrato foi concluído e que cada item mostra usuário e horário;
-9. consulte a agenda e confirme que as alocações foram liberadas sem desaparecer;
-10. tente cancelar a reserva contratada e confirme que a operação é recusada.
+4. tente retirar sem inspeção e confirme que a operação é bloqueada;
+5. inicie a inspeção, confira condição, funcionamento, limpeza e segurança;
+6. anexe uma imagem e um PDF e confirme que os downloads exigem autenticação;
+7. salve um rascunho, continue a conferência e conclua com o nome do cliente;
+8. confirme a retirada e verifique que todas as unidades ficaram **Alugadas**;
+9. devolva somente a primeira como **Em manutenção** e registre uma observação;
+10. confirme que o contrato continua **Em andamento** e a segunda unidade, **Alugada**;
+11. devolva a segunda como **Apta para locação**;
+12. confirme que o contrato foi concluído e que cada item mostra usuário e horário;
+13. consulte a agenda e confirme que as alocações foram liberadas sem desaparecer;
+14. tente cancelar a reserva contratada e confirme que a operação é recusada.
 
 Teste também acesso por outra organização, retirada repetida, devolução repetida e
 condição **Perdida**. Nenhum desses caminhos pode criar movimentação parcial ou cruzar
@@ -244,3 +258,4 @@ O projeto ainda não automatiza backup. Antes de armazenar dados reais:
 - registre RPO e RTO aceitáveis;
 - proteja segredos fora do repositório;
 - centralize logs sem incluir CNPJ, e-mail ou documentos desnecessariamente.
+- inclua banco e evidências privadas no plano de backup e teste a restauração dos dois.

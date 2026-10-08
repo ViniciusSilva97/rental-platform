@@ -24,6 +24,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - inspection_media:/app/media
     depends_on:
       db:
         condition: service_healthy
@@ -42,3 +43,4 @@ services:
 
 volumes:
   postgres_data:
+  inspection_media:

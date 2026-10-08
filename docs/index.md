@@ -89,11 +89,14 @@ sobreposição de agenda.
 - permite devoluções parciais, com condição individual por equipamento.
 - compõe produtos com configurações, acessórios, consumíveis e serviços;
 - preserva acréscimos, descontos e recursos necessários em todas as etapas.
+- exige inspeção inicial aprovada antes da retirada;
+- protege fotos e PDFs usados como evidência da condição entregue.
 
 ## Limites desta versão
 
 A v0.3.0 ainda não possui tela operacional para cadastro de clientes. A v0.4.0 em
-desenvolvimento já cobre contratos e adicionais, mas não inspeção detalhada ou pagamentos. O cadastro de clientes é feito pelo Admin
+desenvolvimento já cobre contratos, adicionais e inspeção inicial, mas não a inspeção
+de retorno, cálculo de avarias ou pagamentos. O cadastro de clientes é feito pelo Admin
 técnico. O [manual](manual.md) deixa esses limites explícitos para não confundir funções
 atuais com funcionalidades planejadas.
 

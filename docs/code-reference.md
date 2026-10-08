@@ -26,13 +26,44 @@ para cada equipamento alocado.
 
 ### `apps.contracts.services.check_out_contract()`
 
-Registra a retirada de todas as unidades, baixa consumíveis reservados e muda unidades
-físicas para `RENTED` em uma única transação.
+Exige uma inspeção inicial concluída, registra a retirada de todas as unidades, baixa
+consumíveis reservados e muda unidades físicas para `RENTED` em uma única transação.
 
 ### `apps.contracts.services.return_contract_item()`
 
 Registra uma devolução individual, atualiza a condição da unidade, libera a alocação e
 conclui o contrato quando não restar item pendente.
+
+## Inspeções
+
+### `apps.inspections.models.OutboundInspection`
+
+Relaciona uma única inspeção inicial ao contrato. Registra estado `DRAFT` ou
+`COMPLETED`, observações gerais, acompanhamento do cliente e usuários responsáveis pela
+criação e conclusão. Depois de concluída, rejeita alterações.
+
+### `apps.inspections.models.OutboundInspectionItem`
+
+Representa a conferência de uma unidade física do contrato. Preserva código e nome,
+condição externa, teste funcional, limpeza, segurança, componentes e observações.
+
+### `apps.inspections.models.InspectionEvidence`
+
+Mantém a referência privada a uma foto ou PDF, nome original, tipo, tamanho, SHA-256,
+descrição, autor e horário. O arquivo não possui URL pública; o download é mediado por
+uma view autenticada e isolada por organização.
+
+### Serviços da inspeção inicial
+
+| Elemento | Contrato |
+|---|---|
+| `create_outbound_inspection(...)` | bloqueia o contrato preparado e cria snapshots de todos os itens físicos |
+| `save_outbound_inspection(...)` | salva rascunho ou conclui somente com todos os itens aprovados |
+| `add_inspection_evidence(...)` | valida tamanho, tipo e assinatura, calcula SHA-256 e persiste o anexo |
+| `delete_inspection_evidence(...)` | remove arquivo e registro somente enquanto a inspeção está em rascunho |
+
+As rotas ficam sob `/app/inspecoes/`. Criação, alteração e remoção usam `POST`;
+downloads exigem sessão e a mesma organização ativa.
 
 ## `common`
 
