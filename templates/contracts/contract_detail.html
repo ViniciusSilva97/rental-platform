@@ -26,11 +26,26 @@
 {% endif %}
 
 {% if contract.status == "PREPARED" %}
-    <p>Confira os equipamentos abaixo. A retirada será registrada para todos em uma única operação.</p>
-    <form method="post" action="{% url 'contracts:checkout' contract.pk %}">
-        {% csrf_token %}
-        <button class="button" type="submit">Confirmar retirada</button>
-    </form>
+    {% if not outbound_inspection %}
+        <p>Antes da retirada, registre a condição inicial de todos os equipamentos.</p>
+        <form method="post" action="{% url 'inspections:create' contract.pk %}">
+            {% csrf_token %}
+            <button class="button" type="submit">Iniciar inspeção inicial</button>
+        </form>
+    {% elif outbound_inspection.status == "DRAFT" %}
+        <p>A inspeção inicial ainda está em rascunho.</p>
+        <a class="button" href="{% url 'inspections:detail' outbound_inspection.pk %}">Continuar inspeção</a>
+    {% else %}
+        <p>
+            Inspeção inicial concluída:
+            <a href="{% url 'inspections:detail' outbound_inspection.pk %}">{{ outbound_inspection.display_code }}</a>.
+            A retirada será registrada para todos os equipamentos em uma única operação.
+        </p>
+        <form method="post" action="{% url 'contracts:checkout' contract.pk %}">
+            {% csrf_token %}
+            <button class="button" type="submit">Confirmar retirada</button>
+        </form>
+    {% endif %}
 {% endif %}
 
 <h2>Equipamentos</h2>

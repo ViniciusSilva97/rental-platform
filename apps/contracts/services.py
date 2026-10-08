@@ -152,6 +152,17 @@ def check_out_contract(*, organization, contract, user):
         if locked.reservation.status != Reservation.Status.CONFIRMED:
             raise ValidationError("A reserva precisa continuar confirmada.")
 
+        from apps.inspections.models import OutboundInspection
+
+        if not OutboundInspection.objects.select_for_update().filter(
+            organization=organization,
+            contract=locked,
+            status=OutboundInspection.Status.COMPLETED,
+        ).exists():
+            raise ValidationError(
+                "Conclua a inspeção inicial antes de registrar a retirada."
+            )
+
         items = list(
             ContractItem.objects.select_for_update()
             .select_related("reservation_allocation", "tool_unit")

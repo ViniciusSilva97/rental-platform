@@ -64,6 +64,7 @@ def contract_detail(request, contract_id):
             "customer",
             "establishment",
             "reservation__quotation",
+            "outbound_inspection",
         ).prefetch_related(
             Prefetch(
                 "items",
@@ -84,6 +85,7 @@ def contract_detail(request, contract_id):
         "contracts/contract_detail.html",
         {
             "contract": contract,
+            "outbound_inspection": getattr(contract, "outbound_inspection", None),
             "return_conditions": ContractItem.ReturnCondition.choices,
         },
     )

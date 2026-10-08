@@ -20,6 +20,7 @@ flowchart TD
     APP --> QUO["quotations"]
     APP --> RES["reservations"]
     APP --> CON["contracts"]
+    APP --> INS["inspections"]
     ACC --> DB[("PostgreSQL")]
     ORG --> DB
     CAT --> DB
@@ -30,6 +31,7 @@ flowchart TD
     QUO --> DB
     RES --> DB
     CON --> DB
+    INS --> DB
 ```
 
 ## Módulos
@@ -46,6 +48,7 @@ flowchart TD
 | `quotations` | períodos, itens, snapshots e estados | estoque, reservas e contratos |
 | `reservations` | disponibilidade temporal e alocação física | contratos, retirada e devolução |
 | `contracts` | contrato, retirada, devolução e condição observada | preço, cobrança e pagamentos |
+| `inspections` | conferência inicial e evidências da entrega | avarias de retorno e cobrança |
 | `common` | primitivas técnicas realmente compartilhadas | regras específicas de um módulo |
 | `config` | composição, URLs, ambientes e inicialização | lógica de negócio |
 
@@ -65,6 +68,8 @@ de um estabelecimento. Ele não recalcula preços e não transforma reserva em c
 retirada e devolução. Ele não recalcula o orçamento nem decide disponibilidade.
 `offerings` define opções estruturadas reutilizadas por orçamento, reserva e contrato;
 o módulo não interpreta observações livres nem decide avarias.
+`inspections` consome os itens físicos de um contrato preparado e registra a condição
+entregue. Ele autoriza a retirada, mas não calcula dano, multa ou cobrança.
 
 ## Isolamento por organização
 
@@ -109,6 +114,10 @@ Invariantes já implementadas:
 - acessórios físicos compartilham a agenda de `ToolUnit` e consumíveis usam saldo
   bloqueado por estabelecimento;
 - seleções estruturadas permanecem imutáveis após o envio do orçamento.
+- cada contrato possui no máximo uma inspeção inicial;
+- inspeção, itens físicos, contrato e evidências compartilham o tenant;
+- todos os itens precisam de teste aprovado e conferências de limpeza e segurança;
+- inspeções concluídas e suas evidências não podem ser alteradas.
 
 ### Adicionais configuráveis
 
@@ -121,6 +130,27 @@ O orçamento guarda `QuotationItemOffering` como memória de cálculo. Na confir
 opções físicas recebem alocações e consumíveis são reservados com bloqueio de linha.
 `ReservationOffering` preserva o compromisso; `ContractOffering` preserva a contratação.
 Na retirada, consumíveis são baixados e unidades retornáveis passam para `RENTED`.
+
+### Inspeção inicial
+
+`create_outbound_inspection()` aceita somente contrato `PREPARED`, bloqueia o contrato
+e cria um `OutboundInspectionItem` para cada `ContractItem`, incluindo configurações e
+acessórios retornáveis. Código e nome são copiados como snapshots.
+
+O rascunho registra condição externa, teste funcional, limpeza, segurança, componentes
+entregues e observações por unidade. `save_outbound_inspection()` só conclui quando todos
+os itens foram aprovados e quando o acompanhamento do cliente possui confirmação e
+nome. Usuário e horário da conclusão ficam registrados; depois disso, cabeçalho, itens
+e anexos tornam-se imutáveis.
+
+`InspectionEvidence` aceita JPG, PNG, WebP e PDF de até 10 MB. O serviço compara tipo
+declarado e assinatura do arquivo, calcula SHA-256 e registra nome original, tamanho,
+autor e horário. O caminho físico usa UUID e tenant; downloads passam por uma view
+autenticada e filtrada por `request.organization`, sem exposição pública de `MEDIA_ROOT`.
+
+`check_out_contract()` consulta a inspeção concluída dentro da mesma transação. A
+interface esconder o botão antes disso é apenas conveniência; o serviço continua sendo
+a barreira autoritativa.
 
 ### Contexto operacional ativo
 
@@ -220,6 +250,8 @@ inalterados em todos os casos.
   e facilitar futuras integrações.
 - Datas são armazenadas com timezone; a apresentação usa `America/Sao_Paulo`.
 - Valores financeiros usam decimal com duas casas.
+- Evidências locais usam volume Docker persistente no desenvolvimento; produção deve
+  configurar armazenamento persistente privado ou armazenamento de objetos.
 
 As regras são aplicadas em duas camadas quando útil:
 

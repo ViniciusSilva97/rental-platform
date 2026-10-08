@@ -10,6 +10,7 @@ urlpatterns = [
     path("health/ready/", health_ready, name="health-ready"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("app/adicionais/", include("apps.offerings.urls")),
+    path("app/inspecoes/", include("apps.inspections.urls")),
     path("app/contratos/", include("apps.contracts.urls")),
     path("app/reservas/", include("apps.reservations.urls")),
     path("app/orcamentos/", include("apps.quotations.urls")),

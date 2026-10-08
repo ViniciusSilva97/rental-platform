@@ -54,6 +54,9 @@ Descobertas fora do escopo devem virar uma nova Issue.
 - Somente reserva confirmada gera contrato; cada reserva gera no máximo um.
 - Contratos preservam cliente, valor, período e equipamentos como histórico.
 - Retiradas e devoluções usam os serviços transacionais do módulo `contracts`.
+- A retirada exige inspeção inicial concluída para todas as unidades físicas do contrato.
+- Inspeções concluídas, seus itens e evidências são imutáveis e isolados por organização.
+- Evidências são acessadas por rota autenticada; nunca exponha o diretório de mídia.
 - A retirada altera a condição física para `RENTED`; a devolução registra a condição
   observada e libera a alocação sem apagar o histórico.
 - Reserva com contrato não pode ser cancelada.

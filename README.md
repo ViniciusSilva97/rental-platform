@@ -40,6 +40,10 @@ Em desenvolvimento para a `v0.4.0`:
 - acréscimos e remoções com desconto preservados como snapshots;
 - estoque físico de acessórios e saldo quantitativo de consumíveis;
 - observações do cliente separadas das opções que alteram preço e disponibilidade.
+- inspeção inicial obrigatória antes da retirada;
+- conferência individual de condição, funcionamento, limpeza e segurança;
+- fotos e PDFs protegidos, com autoria, horário e hash SHA-256;
+- registro do acompanhamento do cliente e histórico imutável apó a conclusão.
 
 ## Requisitos
 
@@ -129,9 +133,11 @@ protege o intervalo semiaberto `[início, fim)` contra sobreposição. Cancelar 
 libera o período sem apagar as alocações históricas.
 
 Em `/app/contratos/`, uma reserva confirmada pode gerar um único contrato. A retirada
-marca todas as unidades como alugadas; cada devolução registra usuário, horário,
-condição e observações. Devoluções parciais mantêm o contrato aberto e a devolução
-integral o conclui automaticamente.
+somente é liberada depois de uma inspeção inicial concluída para todos os itens
+físicos. A conferência registra condição, teste funcional, componentes e evidências;
+depois marca todas as unidades como alugadas. Cada devolução registra usuário,
+horário, condição e observações. Devoluções parciais mantêm o contrato aberto e a
+devolução integral o conclui automaticamente.
 
 ## Verificações
 
@@ -180,8 +186,9 @@ obrigatórias. Consulte [docs/operations.md](docs/operations.md) para todas as v
 
 ## Próximo incremento
 
-Depois do ciclo básico de contratos, a evolução prevista inclui renovação, inspeção
-detalhada, cálculo de avarias e cobrança, cada capacidade em uma Issue independente.
+Depois da inspeção inicial, a evolução prevista inclui inspeção de retorno e comparação
+de evidências, cálculo de avarias, cobrança e renovação, cada capacidade em uma Issue
+independente.
 
 ## Licença
 

@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "apps.quotations",
     "apps.reservations",
     "apps.contracts",
+    "apps.inspections",
 ]
 
 MIDDLEWARE = [
@@ -136,6 +137,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT") or BASE_DIR / "media")
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},

@@ -1,0 +1,99 @@
+{% extends "app_base.html" %}
+
+{% block title %}{{ inspection.display_code }} — Rental Platform{% endblock %}
+
+{% block content %}
+<h1>{{ inspection.display_code }} — inspeção inicial</h1>
+<p><strong>Contrato:</strong> <a href="{% url 'contracts:detail' inspection.contract.pk %}">{{ inspection.contract.display_code }}</a></p>
+<p><strong>Cliente:</strong> {{ inspection.contract.customer_name_snapshot }}</p>
+<p><strong>Situação:</strong> {{ inspection.get_status_display }}</p>
+<p class="muted">Esta conferência registra a condição entregue e será a base da comparação na devolução.</p>
+
+{% if inspection.status == "DRAFT" %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ formset.management_form }}
+    {{ form.general_notes.as_field_group }}
+
+    <h2>Equipamentos físicos</h2>
+    {% for item_form in formset %}
+        <fieldset>
+            <legend>{{ item_form.instance.asset_code_snapshot }} — {{ item_form.instance.tool_name_snapshot }}</legend>
+            {{ item_form.id }}
+            {{ item_form.non_field_errors }}
+            {{ item_form.condition.as_field_group }}
+            {{ item_form.functional_result.as_field_group }}
+            {{ item_form.cleanliness_confirmed.as_field_group }}
+            {{ item_form.safety_confirmed.as_field_group }}
+            {{ item_form.components_snapshot.as_field_group }}
+            {{ item_form.notes.as_field_group }}
+        </fieldset>
+    {% endfor %}
+
+    <fieldset><legend>Confirmação acompanhada</legend>
+        {{ form.customer_representative_name.as_field_group }}
+        {{ form.customer_acknowledged.as_field_group }}
+        <p class="helptext">Esta confirmação registra acompanhamento, mas não substitui assinatura eletrônica.</p>
+    </fieldset>
+    <div class="actions">
+        <button class="button secondary" type="submit" name="action" value="save">Salvar rascunho</button>
+        <button class="button" type="submit" name="action" value="complete">Concluir inspeção</button>
+    </div>
+</form>
+
+<h2>Evidências anexadas</h2>
+{% for item in inspection.items.all %}
+    {% if item.evidences.all %}
+        <h3>{{ item.asset_code_snapshot }} — {{ item.tool_name_snapshot }}</h3>
+        <ul>
+            {% for evidence in item.evidences.all %}
+                <li>
+                    <a href="{% url 'inspections:evidence-download' evidence.pk %}">{{ evidence.original_name }}</a>
+                    {% if evidence.caption %} — {{ evidence.caption }}{% endif %}
+                    <form method="post" action="{% url 'inspections:evidence-delete' evidence.pk %}" class="actions">
+                        {% csrf_token %}
+                        <button class="button danger" type="submit">Remover</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% empty %}
+    <p class="muted">Nenhum equipamento para receber evidências.</p>
+{% endfor %}
+
+<h2>Adicionar evidência</h2>
+<form method="post" enctype="multipart/form-data" action="{% url 'inspections:evidence-add' inspection.pk %}">
+    {% csrf_token %}
+    {{ evidence_form.as_p }}
+    <p class="helptext">JPG, PNG, WebP ou PDF, com até 10 MB por arquivo.</p>
+    <button class="button secondary" type="submit">Anexar evidência</button>
+</form>
+{% else %}
+<p><strong>Concluída em:</strong> {{ inspection.completed_at|date:"d/m/Y H:i" }} por {{ inspection.completed_by }}</p>
+<p><strong>Acompanhante:</strong> {{ inspection.customer_representative_name }}</p>
+{% if inspection.general_notes %}<p><strong>Observações gerais:</strong> {{ inspection.general_notes }}</p>{% endif %}
+
+<h2>Equipamentos conferidos</h2>
+{% for item in inspection.items.all %}
+    <fieldset>
+        <legend>{{ item.asset_code_snapshot }} — {{ item.tool_name_snapshot }}</legend>
+        <p><strong>Condição:</strong> {{ item.get_condition_display }}</p>
+        <p><strong>Teste funcional:</strong> {{ item.get_functional_result_display }}</p>
+        <p><strong>Limpeza:</strong> {% if item.cleanliness_confirmed %}conferida{% else %}não conferida{% endif %}</p>
+        <p><strong>Segurança:</strong> {% if item.safety_confirmed %}conferida{% else %}não conferida{% endif %}</p>
+        {% if item.components_snapshot %}<p><strong>Componentes:</strong> {{ item.components_snapshot }}</p>{% endif %}
+        {% if item.notes %}<p><strong>Observações:</strong> {{ item.notes }}</p>{% endif %}
+        {% if item.evidences.all %}
+            <p><strong>Evidências:</strong></p>
+            <ul>
+                {% for evidence in item.evidences.all %}
+                    <li><a href="{% url 'inspections:evidence-download' evidence.pk %}">{{ evidence.original_name }}</a>{% if evidence.caption %} — {{ evidence.caption }}{% endif %}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </fieldset>
+{% endfor %}
+{% endif %}
+{% endblock %}

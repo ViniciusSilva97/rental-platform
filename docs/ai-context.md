@@ -16,6 +16,7 @@ desenvolvimento.
 - `apps/quotations`: orçamento, conversão do período, snapshots e estados.
 - `apps/reservations`: disponibilidade, confirmação, alocações físicas e cancelamento.
 - `apps/contracts`: contrato, retirada, devolução e condição observada.
+- `apps/inspections`: inspeção inicial, itens conferidos e evidências protegidas.
 - `common`: UUID/timestamps, CPF, CNPJ, CEP e health checks.
 - `config/settings`: ambientes.
 - `mkdocs.yml`: navegação e publicação do site de documentação.
@@ -70,11 +71,18 @@ desenvolvimento.
     cancelamento, sempre de forma atômica.
 43. Opções preservam snapshots no orçamento, na reserva e no contrato.
 44. Remoções são descontos predefinidos e o total do orçamento nunca pode ser negativo.
+45. Cada contrato possui no máximo uma inspeção inicial.
+46. A inspeção inicial cobre todos os itens físicos, inclusive acessórios retornáveis.
+47. A retirada exige inspeção concluída, teste aprovado, limpeza e segurança conferidos.
+48. Conclusão registra responsável, horário e acompanhamento nominal do cliente.
+49. Inspeção, itens e evidências concluídos são imutáveis.
+50. Evidências aceitam somente JPG, PNG, WebP ou PDF de até 10 MB, registram SHA-256
+    e só podem ser baixadas por rota autenticada da organização ativa.
 
 ## Próxima mudança recomendada
 
-Depois das opções configuráveis, evoluir inspeção de saída e retorno em uma Issue
-separada, sem misturar cobrança ou pagamento com a movimentação física.
+Implementar a inspeção de retorno e a comparação com a inspeção inicial em uma Issue
+separada. Cálculo de avarias e cobrança permanecem etapas posteriores.
 
 ## Como propor mudanças
 

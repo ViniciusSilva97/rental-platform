@@ -24,6 +24,12 @@ from apps.contracts.services import (
     return_contract_item,
 )
 from apps.customers.models import Customer
+from apps.inspections.models import OutboundInspectionItem
+from apps.inspections.services import (
+    OutboundInspectionItemInput,
+    create_outbound_inspection,
+    save_outbound_inspection,
+)
 from apps.organizations.models import Establishment, Membership, Organization
 from apps.pricing.models import BillingUnit, PricingPolicy
 from apps.quotations.services import QuotationLineInput, save_draft_quotation
@@ -115,6 +121,33 @@ def create_user(organization, suffix="a"):
     return user
 
 
+def complete_outbound_inspection(*, organization, contract, user):
+    inspection, items = create_outbound_inspection(
+        organization=organization,
+        contract=contract,
+        user=user,
+    )
+    return save_outbound_inspection(
+        organization=organization,
+        inspection=inspection,
+        user=user,
+        general_notes="Conferência inicial aprovada.",
+        customer_acknowledged=True,
+        customer_representative_name="Cliente de teste",
+        item_inputs=tuple(
+            OutboundInspectionItemInput(
+                inspection_item=item,
+                condition=OutboundInspectionItem.Condition.GOOD,
+                functional_result=OutboundInspectionItem.FunctionalResult.APPROVED,
+                cleanliness_confirmed=True,
+                safety_confirmed=True,
+            )
+            for item in items
+        ),
+        complete=True,
+    )
+
+
 @pytest.mark.django_db
 def test_create_contract_preserves_snapshots_and_allocated_units():
     organization, establishment, customer, units, quotation, reservation = create_domain()
@@ -158,6 +191,9 @@ def test_checkout_is_atomic_and_marks_every_unit_as_rented():
     organization, _, _, units, _, reservation = create_domain()
     user = create_user(organization)
     contract, items = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
 
     checked_out = check_out_contract(
         organization=organization,
@@ -181,6 +217,9 @@ def test_checkout_rolls_back_when_one_unit_is_not_operationally_available():
     organization, _, _, units, _, reservation = create_domain()
     user = create_user(organization)
     contract, items = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     units[1].status = ToolUnit.Status.MAINTENANCE
     units[1].save(update_fields=["status", "updated_at"])
 
@@ -206,6 +245,10 @@ def test_operator_must_have_active_membership():
         password="test-password-123",
     )
     contract, _ = create_contract(organization=organization, reservation=reservation)
+    authorized = create_user(organization, "authorized")
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=authorized
+    )
 
     with pytest.raises(ValidationError, match="acesso ativo"):
         check_out_contract(
@@ -220,6 +263,9 @@ def test_inactive_organization_and_repeated_checkout_are_rejected():
     organization, _, _, _, _, reservation = create_domain()
     user = create_user(organization)
     contract, _ = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     check_out_contract(organization=organization, contract=contract, user=user)
 
     with pytest.raises(ValidationError, match="contrato preparado"):
@@ -236,6 +282,9 @@ def test_partial_and_complete_returns_preserve_history_and_update_condition():
     organization, _, _, units, _, reservation = create_domain()
     user = create_user(organization)
     contract, items = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     check_out_contract(organization=organization, contract=contract, user=user)
 
     first, active_contract = return_contract_item(
@@ -278,6 +327,9 @@ def test_lost_return_condition_is_preserved_on_item_and_unit():
     organization, _, _, units, _, reservation = create_domain(unit_count=1)
     user = create_user(organization)
     contract, items = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     check_out_contract(organization=organization, contract=contract, user=user)
 
     returned, _ = return_contract_item(
@@ -310,6 +362,9 @@ def test_item_cannot_be_returned_twice_or_before_checkout():
             user=user,
         )
 
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     check_out_contract(organization=organization, contract=contract, user=user)
     return_contract_item(
         organization=organization,
@@ -335,6 +390,9 @@ def test_return_rejects_invalid_condition_and_item_from_another_contract():
     organization, _, _, _, _, reservation = create_domain()
     user = create_user(organization)
     contract, items = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     check_out_contract(organization=organization, contract=contract, user=user)
 
     with pytest.raises(ValidationError, match="condição de devolução válida"):
@@ -352,6 +410,11 @@ def test_return_rejects_invalid_condition_and_item_from_another_contract():
     other_contract, _ = create_contract(
         organization=other_organization,
         reservation=other_reservation,
+    )
+    complete_outbound_inspection(
+        organization=other_organization,
+        contract=other_contract,
+        user=other_user,
     )
     check_out_contract(
         organization=other_organization,
@@ -389,6 +452,9 @@ def test_contract_views_execute_lifecycle_and_filter_by_active_organization(clie
     assert response.status_code == 302
     assert response.url == reverse("contracts:detail", args=[contract.pk])
 
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     response = client.post(reverse("contracts:checkout", args=[contract.pk]))
     assert response.status_code == 302
     contract.refresh_from_db()
@@ -507,6 +573,9 @@ def test_concurrent_return_keeps_single_event():
     organization, _, _, _, _, reservation = create_domain(unit_count=1)
     user = create_user(organization)
     contract, items = create_contract(organization=organization, reservation=reservation)
+    complete_outbound_inspection(
+        organization=organization, contract=contract, user=user
+    )
     check_out_contract(organization=organization, contract=contract, user=user)
     barrier = Barrier(2)
 
